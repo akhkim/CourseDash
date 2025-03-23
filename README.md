@@ -5,11 +5,11 @@
 - [Inspiration](#inspiration)
 - [Role](#role)
 - [Purpose](#purpose)
+- [Getting Started](#getting-started)
 - [Challenges](#challenges)
 - [Accomplishments](#accomplishments)
 - [Lessons](#lessons)
 - [Future Plans](#future-plans)
-- [License](#license)
 
 ## Inspiration
 With the United Nations being a major sponsor of the hackathon, and human empowerment being the theme, we first looked through the UN Sustainable Development Goals, and number 4 (Quality Education), number 8 (Decent Work and Economic Growth), and number 10 (Reduced Inequality) caught my attention, as they all can be bettered through a quality learning assistant that keeps you and your learning on track, equally for everyone. 
@@ -29,6 +29,27 @@ Our tech-stack looks like the following
 - APIs & Cloud Services: We used Google's Gemini as the base model for our course-specific assistants, and used Firebase for Google OAuth 2.0, and Google Workspace to automatically add the events to the user's Google Calendar.
 - AI Integration: Leveraged off of Google's Gemini to automatically add lectures, office hours, tutorials, and test schedules to your Google Calendar when the syllabus is provided. Furthermore, the model generates lecture summaries, quizzes, and interactive chatbot responses according to the lecture notes that you provide, allowing for the most accurate and relevant information.
 - Collaborative Development: We adopted agile methodologies, with continuous integration and real-time collaboration using version control and project management tools, ensuring rapid development over the 36 hours.
+
+## Getting Started
+Follow these steps to set up and run the project locally:
+
+### 1. Set up the Next.js frontend
+```
+cd next-app
+npm install
+npm run dev
+```
+This installs dependencies and starts the frontend on http://localhost:3000.
+
+### 2. Set up the Flask backend
+```
+cd ../flask_app
+flask run
+```
+This starts the backend, typically on http://127.0.0.1:5000.
+
+### 3. Access the application
+Open http://localhost:3000 in your browser to start using the app.
 
 ## Challenges
 As amazing as the results are, these results came at a cost of several challenges.
