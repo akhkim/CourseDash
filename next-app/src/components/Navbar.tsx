@@ -28,7 +28,7 @@ const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
             <div className="flex items-center space-x-2">
-  <Link href="/" className="flex items-center space-x-2">
+  <Link href="/dashboard" className="flex items-center space-x-2">
     <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center shadow-sm">
       <Image src={Logo} alt="Logo" className="h-7 w-7 text-white" />
     </div>
