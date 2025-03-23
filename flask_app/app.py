@@ -82,6 +82,7 @@ def delete_chat_history():
     # Deletes the unified in-memory chat history for now.
     # In the future, chat history will be stored in the cloud.
     delete_history()
+    return jsonify({'message': "Deleted chat history successfully"})
 
 
 @app.route('/api/users', methods=['POST'])
