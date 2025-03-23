@@ -1,3 +1,5 @@
+# CourseDash
+
 ## Inspiration
 As a dedicated university student, I learned the difficulties of managing a crowded academic calendar by experience. Between lectures, office hours, tutorials, clubs, assignments, and exams, keeping everything organized and fully comprehended was a constant struggle. CourseDash emerged out of necessity for an intelligent, streamlined solution that not only handles your academic calendar but also augments your learning experience through AI-driven insights. We wanted to make something that would fill the gap between understanding and administration—a true study buddy.
 
