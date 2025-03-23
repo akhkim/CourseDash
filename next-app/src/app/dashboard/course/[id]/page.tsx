@@ -135,6 +135,70 @@ const parseCourseTimes = (times: string[] = []): Array<{ type: string; day: stri
   return result;
 };
 
+/**
+ * Sorts sessions by proximity to the current day and time
+ * @param sessions Array of session objects with day and time properties
+ * @returns Sorted array with closest sessions first
+ */
+const sortSessionsByProximity = (
+  sessions: Array<{ type: string; day: string; time: string }>
+): Array<{ type: string; day: string; time: string }> => {
+  if (!sessions.length) return [];
+  
+  const now = new Date();
+  const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  
+  // Map day strings to numbers (0-6)
+  const dayMap: Record<string, number> = {
+    'Sun': 0, 'Sunday': 0,
+    'Mon': 1, 'Monday': 1,
+    'Tue': 2, 'Tuesday': 2,
+    'Wed': 3, 'Wednesday': 3,
+    'Thu': 4, 'Thursday': 4,
+    'Fri': 5, 'Friday': 5,
+    'Sat': 6, 'Saturday': 6
+  };
+  
+  return [...sessions].sort((a, b) => {
+    // Parse days to numeric values
+    const dayA = dayMap[a.day] ?? -1;
+    const dayB = dayMap[b.day] ?? -1;
+    
+    if (dayA === -1 || dayB === -1) {
+      console.error("Unknown day format:", a.day, b.day);
+      return 0;
+    }
+    
+    // Parse start times (assuming format like "9:00-10:00" or "9:00-10:00")
+    const startTimeA = a.time.split('-')[0].trim();
+    const startTimeB = b.time.split('-')[0].trim();
+    
+    const [hourA, minuteA] = startTimeA.split(':').map(Number);
+    const [hourB, minuteB] = startTimeB.split(':').map(Number);
+    
+    // Calculate days from now (0 = today, 1 = tomorrow, etc.)
+    let daysFromNowA = (dayA - currentDay + 7) % 7;
+    let daysFromNowB = (dayB - currentDay + 7) % 7;
+    
+    // If it's today but the time has passed, it's effectively 7 days away
+    if (daysFromNowA === 0 && (hourA < currentHour || (hourA === currentHour && minuteA < currentMinute))) {
+      daysFromNowA = 7;
+    }
+    if (daysFromNowB === 0 && (hourB < currentHour || (hourB === currentHour && minuteB < currentMinute))) {
+      daysFromNowB = 7;
+    }
+    
+    // First compare by days from now
+    if (daysFromNowA !== daysFromNowB) {
+      return daysFromNowA - daysFromNowB;
+    }
+    
+    // If same day, compare by time
+    return (hourA * 60 + minuteA) - (hourB * 60 + minuteB);
+  });
+};
 
 export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const { id } = params;
@@ -193,7 +257,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   }, [id]);
   
   // Parse sessions from course times
-  const sessions = courseData?.times ? parseCourseTimes(courseData.times) : [];
+  const sessions = courseData?.times ? sortSessionsByProximity(parseCourseTimes(courseData.times)) : [];
   
   // Extract next assessment (exam/quiz) if exists
   const nextAssessment = courseData?.assessments?.[0] || null;
@@ -321,17 +385,57 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         fileType: data.file.type,
         summary: "File uploaded successfully."
       };
-      // Add the new lecture to the course data
+      
+      // Create the updated course data
+      let updatedCourseData;
       if (courseData && courseData.lectureNotes) {
-        setCourseData({
+        updatedCourseData = {
           ...courseData,
           lectureNotes: [newLecture, ...courseData.lectureNotes]
-        });
+        };
       } else if (courseData) {
-        setCourseData({
+        updatedCourseData = {
           ...courseData,
           lectureNotes: [newLecture]
-        });
+        };
+      }
+      
+      // Update the local state
+      if (updatedCourseData) {
+        setCourseData(updatedCourseData);
+      }
+      
+      // Save the updated course data to the database
+      if (updatedCourseData) {
+        try {
+          const updateResponse = await authFetch(`/api/courses/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedCourseData),
+          });
+          
+          if (!updateResponse.ok) {
+            console.error('Failed to update lecture in database', await updateResponse.text());
+            toast({
+              title: "Warning",
+              description: "Lecture was added locally but may not be saved to the database.",
+              variant: "destructive",
+              duration: 5000,
+            });
+          } else {
+            console.log('Successfully updated lecture in database');
+          }
+        } catch (dbError) {
+          console.error('Error updating database:', dbError);
+          toast({
+            title: "Warning",
+            description: "Lecture was added locally but failed to save to the database.",
+            variant: "destructive",
+            duration: 5000,
+          });
+        }
       }
       
       // Reset the form state
