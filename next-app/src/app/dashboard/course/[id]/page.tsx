@@ -262,6 +262,68 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     setShowingQuiz(false);
   };
 
+  // Function to handle file downloads
+  const handleDownloadFile = (summary: any) => {
+    try {
+      // Check for valid file URL source in different possible structures
+      let fileUrl = '';
+      let fileName = '';
+      
+      // Option 1: Check if the files array exists with URL
+      if (summary.files && Array.isArray(summary.files) && summary.files.length > 0 && summary.files[0].url) {
+        fileUrl = summary.files[0].url;
+        fileName = summary.files[0].name || summary.fileName || 'download';
+      } 
+      // Option 2: Check if there's a direct file property
+      else if (summary.fileUrl) {
+        fileUrl = summary.fileUrl;
+        fileName = summary.fileName || 'download';
+      }
+      // Option 3: Fall back to syllabus PDF if it's the same document
+      else if (courseData?.syllabusPDF && summary.fileName?.includes('syllabus')) {
+        fileUrl = courseData.syllabusPDF;
+        fileName = summary.fileName || 'syllabus.pdf';
+      }
+      
+      if (!fileUrl) {
+        toast({
+          title: "Download Error",
+          description: "No file available for download",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+      
+      // For data URLs, create a temporary anchor element
+      if (fileUrl.startsWith('data:')) {
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // For regular URLs, open in a new tab or trigger download
+        window.open(fileUrl, '_blank');
+      }
+      
+      toast({
+        title: "Download Started",
+        description: `Downloading ${fileName}`,
+        duration: 3000,
+      });
+    } catch (err) {
+      console.error("Error downloading file:", err);
+      toast({
+        title: "Download Failed",
+        description: "There was an error downloading the file",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
   const lectureForm = useForm({
     defaultValues: {
       date: "",
@@ -299,18 +361,21 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       });
       console.log("Upload result:", result);
 
-      const result2 = await fetch('/api/documents', {
+      // Also upload the document to store the file in the database
+      const documentResult = await fetch('/api/documents', {
         method: 'POST',
         body: formData  // This is correct - sending FormData
       });
-      // console.log("Upload result:", result);
-
-      // Add a delay to ensure the API call has completed
+      console.log("Document upload result:", documentResult);
+      
+      // Add a delay to ensure the API calls have completed
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Create a simplified lecture object for display
+      // Get results from both API calls
       const resultData = await result.json();
+      const documentData = await documentResult.json();
       console.log("Result data:", resultData);
+      console.log("Document data:", documentData);
       
       const newLecture = {
         id: Date.now().toString(),
@@ -320,14 +385,27 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         fileType: data.file.type,
         date: data.date || new Date().toISOString().split('T')[0],
         summary: resultData.summary || "File uploaded successfully.",
-        files: [] // Initialize empty files array to match schema
+        // Add file information from the document upload
+        files: documentData.url ? [{ 
+          name: data.file.name, 
+          url: documentData.url 
+        }] : []
       };
       
-      // Add the new lecture to the course data
+      // Add the new lecture to the course data and sort by date (newest first)
       if (courseData && courseData.lectureNotes) {
+        // Add new lecture and sort all lectures by date in descending order
+        const sortedLectureNotes = [newLecture, ...courseData.lectureNotes].sort((a, b) => {
+          // Convert dates to comparable format
+          const dateA = new Date(a.date).getTime();
+          const dateB = new Date(b.date).getTime();
+          // Sort descending (newest first)
+          return dateB - dateA;
+        });
+        
         setCourseData({
           ...courseData,
-          lectureNotes: [newLecture, ...courseData.lectureNotes]
+          lectureNotes: sortedLectureNotes
         });
       } else if (courseData) {
         setCourseData({
@@ -338,11 +416,19 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       
       // Update the course in the database with the new lecture data
       try {
+        const updatedLectureNotes = courseData?.lectureNotes ? 
+          [newLecture, ...courseData.lectureNotes].sort((a, b) => {
+            // Convert dates to comparable format
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+            // Sort descending (newest first)
+            return dateB - dateA;
+          }) : 
+          [newLecture];
+          
         const updatedCourseData = courseData ? {
           ...courseData,
-          lectureNotes: courseData.lectureNotes ? 
-            [newLecture, ...courseData.lectureNotes] : 
-            [newLecture]
+          lectureNotes: updatedLectureNotes
         } : null;
         
         if (updatedCourseData) {
@@ -728,7 +814,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                   <p className="text-sm font-medium">{summary.fileName}</p>
                                   <p className="text-xs text-muted-foreground">{summary.fileType} • {summary.date}</p>
                                 </div>
-                                <Button size="sm" variant="outline" className="text-xs h-7">Download</Button>
+                                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => handleDownloadFile(summary)}>Download</Button>
                               </div>
                               <div className="mt-3">
                                 <h4 className="text-sm font-medium mb-1">Summary</h4>
