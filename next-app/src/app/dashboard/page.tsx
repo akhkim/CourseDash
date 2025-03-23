@@ -181,6 +181,11 @@ export default function DashboardPage() {
         body: JSON.stringify(formData),
       });
 
+      // const response2 = await authFetch('/api/documents', {
+      //   method: 'POST',
+      //   body: formData,
+      // });
+
       if (response.ok) {
         setIsAddCourseModalOpen(false);
         toast({
