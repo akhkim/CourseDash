@@ -16,7 +16,9 @@ HISTORY = []  # Store conversation history in-memory for the purpose of hackatho
 
 
 def vectorize_and_store(file, course, date, user_id):
-    text = f"Date: {date}\n\n{extract_text(file)}"
+    text = {extract_text(file)}
+    if date:
+        text = "Date: {date}\n\n" + text
     embedding = get_embedding(text)
     documents = chroma_client.get_or_create_collection(name=user_id)
     documents.add(ids=str(uuid.uuid4()), documents=text, embeddings=embedding, metadatas={"course": course})
