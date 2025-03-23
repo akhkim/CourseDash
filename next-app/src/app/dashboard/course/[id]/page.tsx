@@ -261,8 +261,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const [showingQuiz, setShowingQuiz] = useState(false);
   const [quizParameters, setQuizParameters] = useState<QuizParametersType>({
     difficulty: 'easy',
-    fromLecture: 1,
-    toLecture: 5,
+    user_input: '',
     numberOfQuestions: 5
   });
   const [courseData, setCourseData] = useState<CourseData | null>(null);
@@ -1094,6 +1093,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     parameters={quizParameters}
                     onComplete={handleQuizComplete}
                     onReturn={handleReturnFromQuiz}
+                    courseData={courseData}
                   />
                 ) : (
                   <div className="max-w-xl mx-auto">
