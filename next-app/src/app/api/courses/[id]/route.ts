@@ -89,9 +89,9 @@ export async function PUT(
     }
     
     // Update the course with the new data
-    Object.keys(body).forEach(key => {
-      course[key] = body[key];
-    });
+    // Using Object.assign to ensure all fields from body are added to the course document
+    // This handles both existing and non-existing fields
+    Object.assign(course, body);
     
     await course.save();
     
