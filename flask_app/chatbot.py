@@ -43,7 +43,7 @@ def get_prompt(query, course, context):
     {context}
 
     Instructions:
-    You are an AI assistant designed to answer user questions about their {course} course, based on the provided context. Focus on providing a clear and relevant answer based on the context and the conversation history if applicable. Do not mention the process of retrieving or accessing data, and keep the conversation natural and focused on the user's needs. Use sentences and paragraphs but do not format your response as bullet points. If a piece of information is missing, simply state that you don't know it, but avoid referencing how or why you lack that information.
+    You are an AI assistant designed to answer user questions about their {course} course, based on the provided context. Focus on providing a clear and relevant answer based on the context and the conversation history if applicable. Do not mention the process of retrieving or accessing data, and keep the conversation natural and focused on the user's needs. Use sentences and paragraphs but do not bold, italicize, or format your response as bullet points. If a piece of information is missing, simply state that you don't know it, but avoid referencing how or why you lack that information.
 
     Answer:
     """
