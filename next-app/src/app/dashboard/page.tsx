@@ -37,6 +37,7 @@ interface Course {
 export default function DashboardPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
+  const [isHoveringButton, setIsHoveringButton] = useState(false);
   const { user, loading } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
@@ -89,22 +90,17 @@ export default function DashboardPage() {
 
   // Add CSS to hide default cursor globally when custom pointer is active
   useEffect(() => {
-    // Create a style element
     const styleElement = document.createElement('style');
     styleElement.innerHTML = `
       body * {
-        cursor: ${isHoveringCourse || isHoveringAddButton ? 'none !important' : 'auto'};
+        cursor: ${isHoveringCourse || isHoveringAddButton || isHoveringButton ? 'none !important' : 'auto'};
       }
     `;
-    
-    // Append style to head
     document.head.appendChild(styleElement);
-    
     return () => {
-      // Clean up
       document.head.removeChild(styleElement);
     };
-  }, [isHoveringCourse, isHoveringAddButton]);
+  }, [isHoveringCourse, isHoveringAddButton, isHoveringButton]);
 
   // Filter courses based on search term
   useEffect(() => {
@@ -129,6 +125,9 @@ export default function DashboardPage() {
   
   const handleMouseMove = (e: React.MouseEvent) => {
     setMousePosition({ x: e.clientX, y: e.clientY });
+    const target = e.target as HTMLElement;
+    const isButton = target.closest('button') !== null;
+    setIsHoveringButton(isButton);
   };
 
   // Replace handleAddToGoogleCalendar with:
@@ -397,7 +396,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 relative" onMouseMove={handleMouseMove}>
       <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"></div>
       <Navbar />
-      {(isHoveringCourse || isHoveringAddButton) && <Pointer position={mousePosition} />}
+      {(isHoveringCourse || isHoveringAddButton || isHoveringButton) && <Pointer position={mousePosition} />}
       
       <main className="container mx-auto px-4 py-12">
         {/* Dashboard Header with Visual Elements */}
