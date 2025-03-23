@@ -5,7 +5,7 @@ import fs from 'fs';
 const form = new FormData();
 form.append('file', fs.createReadStream('mat235syllabus.pdf'));
 
-axios.post('http://localhost:3000/process_syllabus', form, {
+axios.post('http://localhost:8000/process_syllabus', form, {
     headers: {
         ...form.getHeaders()
     }
