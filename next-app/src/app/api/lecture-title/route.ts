@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     try {
       // Forward the request to the Flask API
-      const flaskResponse = await fetch(`${FLASK_API_URL}/api/lecture-title`, {
+      const flaskResponse = await fetch(`${FLASK_API_URL}/api/lecture-info`, {
         method: 'POST',
         body: formData,
       });
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (error) {
-    console.error('Error in lecture-title API route:', error);
+    console.error('Error in lecture-info API route:', error);
     return NextResponse.json(
       { error: 'Failed to process title extraction request' },
       { status: 500 }

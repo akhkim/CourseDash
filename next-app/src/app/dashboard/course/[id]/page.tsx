@@ -313,7 +313,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         fileName: data.file.name,
         fileType: data.file.type,
         date: data.date || new Date().toISOString().split('T')[0],
-        summary: "File uploaded successfully.",
+        summary: resultData.summary || "File uploaded successfully.",
         files: [] // Initialize empty files array to match schema
       };
       
