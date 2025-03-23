@@ -15,7 +15,7 @@ import {
   Globe
 } from 'lucide-react';
 import Image from "next/image";
-import Logo from "@/app/logo.png";
+import Logo from "/logo.png";
 
 export default function Home() {  
   // Sample stats data
