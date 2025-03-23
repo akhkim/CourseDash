@@ -16,6 +16,7 @@ interface LectureNote {
 export interface ICourse extends Document {
   googleUid: string;
   courseName: string;
+  hasSyllabus: 'yes' | 'no';
   syllabusPDF?: string;
   lectureNotes?: LectureNote[];
   times?: string[];
@@ -48,6 +49,11 @@ const CourseSchema: Schema = new Schema(
       type: String,
       required: true,
     },
+    hasSyllabus: {
+      type: String,
+      enum: ['yes', 'no'],
+      default: 'no'
+    },
     syllabusPDF: {
       type: String,
       default: '',
@@ -75,8 +81,6 @@ const CourseSchema: Schema = new Schema(
   }
 );
 
-// Check if the Course model already exists to prevent overwriting it
-// This is needed for hot reloading in development
 const Course: Model<ICourse> = mongoose.models.Course || mongoose.model<ICourse>('Course', CourseSchema);
 
-export default Course; 
+export default Course;
