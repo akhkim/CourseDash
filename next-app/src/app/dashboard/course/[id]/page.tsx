@@ -311,16 +311,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     });
   };
 
-  const handleQuizComplete = (score: number, totalQuestions: number) => {
-    const percentage = (score / totalQuestions) * 100;
-    
-    toast({
-      title: "Quiz Completed",
-      description: `You scored ${score} out of ${totalQuestions} (${percentage.toFixed(0)}%)`,
-      duration: 3000,
-    });
-  };
-
   const handleStartQuiz = (parameters: QuizParametersType) => {
     setQuizParameters(parameters);
     setShowingQuiz(true);
