@@ -14,6 +14,8 @@ import {
   CheckCircle,
   Globe
 } from 'lucide-react';
+import Image from "next/image";
+import Logo from "@/app/logo.png";
 
 export default function Home() {  
   // Sample stats data
@@ -44,7 +46,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center shadow-sm">
-              <Sparkle className="h-5 w-5 text-white" />
+              <Image src={Logo} alt="Logo" className="h-7 w-7 text-white" />
             </div>
             <span className="font-bold text-xl">CourseDash</span>
           </div>
@@ -501,7 +503,7 @@ export default function Home() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center shadow-sm">
-                  <Sparkle className="h-5 w-5 text-white" />
+                  <Image src={Logo} alt="Logo" className="h-7 w-7 text-white" />
                 </div>
                 <span className="font-bold text-xl">CourseDash</span>
               </div>
