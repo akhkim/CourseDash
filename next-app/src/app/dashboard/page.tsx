@@ -8,7 +8,7 @@ import { CourseCard } from '@/components/CourseCard';
 import Navbar from '@/components/Navbar';
 import { authFetch } from '@/lib/utils/auth-fetch';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Loader2, BookOpen, Calendar, ExternalLink } from 'lucide-react';
+import { Plus, Search, Loader2, BookOpen, Calendar, ExternalLink, Clock, User, Video } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast"
 import { Pointer } from "@/components/ui/coloured_pointer";
 import { Input } from "@/components/ui/input";
@@ -21,8 +21,8 @@ interface Course {
   times: string[];
   createdAt: string;
   completionRate?: number;
-  totalAssignments?: number;
   upcomingDeadlines?: number;
+  lecturesUploaded?: number; // Added field for lectures uploaded
 }
 
 export default function DashboardPage() {
@@ -56,9 +56,9 @@ export default function DashboardPage() {
     
     let semester;
     if (currentMonth >= 8 && currentMonth <= 11) { // September-December
-      semester = 'First';
+      semester = 'Fall';
     } else if (currentMonth >= 0 && currentMonth <= 3) { // January-April
-      semester = 'Second';
+      semester = 'Winter';
     } else { // May-August
       semester = 'Summer';
     }
@@ -122,9 +122,7 @@ export default function DashboardPage() {
       // For now, setting fixed values as placeholders until real data is available
       return {
         ...course,
-        completionRate: 65, // This would come from actual assignments/progress data
-        totalAssignments: 12, // This would be calculated from actual assignments
-        upcomingDeadlines: 3 // This would be calculated from due dates
+        lecturesUploaded: Math.floor(Math.random() * 15) + 5 // Random number of lectures between 5-20
       };
     });
   };
@@ -181,11 +179,6 @@ export default function DashboardPage() {
         body: JSON.stringify(formData),
       });
 
-      // const response2 = await authFetch('/api/documents', {
-      //   method: 'POST',
-      //   body: formData,
-      // });
-
       if (response.ok) {
         setIsAddCourseModalOpen(false);
         toast({
@@ -225,6 +218,12 @@ export default function DashboardPage() {
       description: 'Your courses are being synchronized with Google Calendar.',
     });
     // Actual implementation would make API calls to sync with Google Calendar
+  };
+
+  // Format the lecture time for display
+  const formatLectureTimes = (times: string[]) => {
+    if (!times || times.length === 0) return "No scheduled times";
+    return times.slice(0, 2).join(", ") + (times.length > 2 ? "..." : "");
   };
 
   return (
@@ -454,26 +453,27 @@ export default function DashboardPage() {
                     <h3 className="font-semibold text-lg mb-2 text-slate-800">{course.courseName}</h3>
                     <p className="text-slate-600 text-sm line-clamp-2 mb-4">{course.courseDescription}</p>
                     
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-sm text-slate-600">
-                        <span className="font-medium">Completion:</span>
+                    {/* Replaced completion bar with professor info and lecture details */}
+                    <div className="space-y-3 mb-4">
+                      {/* Professor name */}
+                      <div className="flex items-center text-sm text-slate-600">
+                        <User className="h-4 w-4 mr-2 text-indigo-500" />
+                        <span className="font-medium">Professor:</span>
+                        <span className="ml-2">{course.profName}</span>
                       </div>
-                      <span className="text-sm font-medium text-indigo-600">{course.completionRate}%</span>
-                    </div>
-                    
-                    <div className="w-full h-2 bg-slate-100 rounded-full mb-4">
-                      <div 
-                        className="h-2 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full" 
-                        style={{ width: `${course.completionRate}%` }}
-                      ></div>
-                    </div>
-                    
-                    <div className="flex justify-between text-xs text-slate-500 mb-4">
-                      <div>
-                        <span className="font-medium text-slate-700">{course.totalAssignments}</span> assignments
+                      
+                      {/* Lecture times */}
+                      <div className="flex items-center text-sm text-slate-600">
+                        <Clock className="h-4 w-4 mr-2 text-indigo-500" />
+                        <span className="font-medium">Schedule:</span>
+                        <span className="ml-2 text-xs">{formatLectureTimes(course.times)}</span>
                       </div>
-                      <div>
-                        <span className="font-medium text-slate-700">{course.upcomingDeadlines}</span> upcoming deadlines
+                      
+                      {/* Lectures uploaded */}
+                      <div className="flex items-center text-sm text-slate-600">
+                        <Video className="h-4 w-4 mr-2 text-indigo-500" />
+                        <span className="font-medium">Lectures:</span>
+                        <span className="ml-2">{course.lecturesUploaded} uploaded</span>
                       </div>
                     </div>
                     
@@ -505,21 +505,23 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <h3 className="font-medium text-slate-800">{course.courseName}</h3>
-                      <p className="text-sm text-slate-500">Prof. {course.profName}</p>
+                      <div className="flex items-center text-sm text-slate-500">
+                        <User className="h-3 w-3 mr-1 text-indigo-400" />
+                        <span>Prof. {course.profName}</span>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center w-64">
-                    <div className="flex-1 mr-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-slate-500">Progress</span>
-                        <span className="text-xs font-medium text-indigo-600">{course.completionRate}%</span>
+                  {/* Replaced progress bar with lecture info in list view */}
+                  <div className="flex items-center w-64 space-x-2">
+                    <div className="flex-1">
+                      <div className="flex items-center text-xs text-slate-500 mb-1">
+                        <Clock className="h-3 w-3 mr-1 text-indigo-400" />
+                        <span className="truncate">{formatLectureTimes(course.times)}</span>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-100 rounded-full">
-                        <div 
-                          className="h-1.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full" 
-                          style={{ width: `${course.completionRate}%` }}
-                        ></div>
+                      <div className="flex items-center text-xs text-slate-500">
+                        <Video className="h-3 w-3 mr-1 text-indigo-400" />
+                        <span>{course.lecturesUploaded} lectures uploaded</span>
                       </div>
                     </div>
                     
