@@ -15,34 +15,20 @@ interface QuizParametersProps {
 
 export interface QuizParameters {
   difficulty: 'easy' | 'medium' | 'hard';
-  fromLecture: number;
-  toLecture: number;
+  user_input: string;
   numberOfQuestions: number;
 }
 
 const QuizParameters: React.FC<QuizParametersProps> = ({ onStartQuiz }) => {
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
-  const [fromLecture, setFromLecture] = useState(1);
-  const [toLecture, setToLecture] = useState(5);
+  const [user_input, setUserInput] = useState('');
   const [numberOfQuestions, setNumberOfQuestions] = useState(10);
-  const maxLectures = 10; // You can adjust this based on your course data
   const maxQuestions = 30; // Maximum number of questions
-  
-  const handleFromLectureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 1;
-    setFromLecture(Math.min(Math.max(value, 1), toLecture));
-  };
-  
-  const handleToLectureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 1;
-    setToLecture(Math.min(Math.max(value, fromLecture), maxLectures));
-  };
   
   const handleStart = () => {
     onStartQuiz({
       difficulty,
-      fromLecture,
-      toLecture,
+      user_input,
       numberOfQuestions
     });
   };
@@ -56,6 +42,17 @@ const QuizParameters: React.FC<QuizParametersProps> = ({ onStartQuiz }) => {
         </h3>
         
         <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="user_input">Study Material</Label>
+            <Input
+              id="user_input"
+              placeholder="Enter text, topic, or paste content to create a quiz about"
+              value={user_input}
+              onChange={(e) => setUserInput(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="difficulty">Select Difficulty</Label>
             <Select
@@ -89,34 +86,6 @@ const QuizParameters: React.FC<QuizParametersProps> = ({ onStartQuiz }) => {
           </div>
           
           <div className="space-y-2">
-            <Label>Lecture Coverage</Label>
-            <div className="flex items-center space-x-2">
-              <div className="w-full">
-                <Label htmlFor="fromLecture" className="text-xs text-muted-foreground">From</Label>
-                <Input 
-                  id="fromLecture"
-                  type="number"
-                  min={1}
-                  max={toLecture}
-                  value={fromLecture}
-                  onChange={handleFromLectureChange}
-                />
-              </div>
-              <div className="w-full">
-                <Label htmlFor="toLecture" className="text-xs text-muted-foreground">To</Label>
-                <Input 
-                  id="toLecture"
-                  type="number"
-                  min={fromLecture}
-                  max={maxLectures}
-                  value={toLecture}
-                  onChange={handleToLectureChange}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="numberOfQuestions">Number of Questions</Label>
               <span className="text-sm text-muted-foreground">
@@ -142,7 +111,11 @@ const QuizParameters: React.FC<QuizParametersProps> = ({ onStartQuiz }) => {
           </div>
           
           <div className="pt-4">
-            <Button onClick={handleStart} className="w-full">
+            <Button 
+              onClick={handleStart} 
+              className="w-full"
+              disabled={!user_input.trim()}
+            >
               Start Quiz
             </Button>
           </div>
