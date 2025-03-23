@@ -28,131 +28,7 @@ interface QuizProps {
 
 // Mock questions for different difficulty levels
 const allQuestions: QuizQuestion[] = [
-  // Easy questions
-  {
-    id: "easy1",
-    question: "What is the primary purpose of an algorithm?",
-    options: [
-      "To create visual designs",
-      "To solve problems through a series of steps",
-      "To write documentation",
-      "To design hardware"
-    ],
-    correctAnswer: 1,
-    type: 'multiple-choice',
-    lectureNumber: 1
-  },
-  {
-    id: "easy2",
-    question: "Which data structure operates on a Last-In-First-Out (LIFO) principle?",
-    options: [
-      "Queue",
-      "Stack",
-      "Linked List",
-      "Tree"
-    ],
-    correctAnswer: 1,
-    type: 'multiple-choice',
-    lectureNumber: 2
-  },
-  {
-    id: "easy3",
-    question: "What does CPU stand for?",
-    options: [
-      "Central Processing Unit",
-      "Computer Processing Unit",
-      "Central Program Unit",
-      "Control Processing Unit"
-    ],
-    correctAnswer: 0,
-    type: 'multiple-choice',
-    lectureNumber: 3
-  },
-  // Medium questions
-  {
-    id: "medium1",
-    question: "Explain the difference between a stack and a queue data structure in 5 words or less.",
-    type: 'short-answer',
-    correctAnswer: "stack LIFO queue FIFO",
-    lectureNumber: 4
-  },
-  {
-    id: "medium2",
-    question: "Define recursion in 5 words or less.",
-    type: 'short-answer',
-    correctAnswer: "function calls itself",
-    lectureNumber: 5
-  },
-  // Hard questions
-  {
-    id: "hard1",
-    question: "Analyze the time and space complexity of quicksort algorithm. Discuss its best, average, and worst case scenarios and compare it with other sorting algorithms.",
-    type: 'long-answer',
-    correctAnswer: "quicksort O(n log n) O(n²) partitioning pivot comparison",
-    lectureNumber: 6
-  },
-  {
-    id: "hard2",
-    question: "Explain how the TCP/IP protocol suite works, its different layers, and how they interact with each other to facilitate internet communication.",
-    type: 'long-answer',
-    correctAnswer: "TCP IP layers encapsulation packets transmission control protocol internet",
-    lectureNumber: 7
-  },
-  // Additional questions for lecture coverage
-  {
-    id: "q7",
-    question: "What is the purpose of the Model-View-Controller (MVC) pattern?",
-    options: [
-      "To organize database schemas",
-      "To separate concerns in software design",
-      "To optimize code performance",
-      "To create user interfaces"
-    ],
-    correctAnswer: 1,
-    type: 'multiple-choice',
-    lectureNumber: 7
-  },
-  {
-    id: "q8",
-    question: "Explain encapsulation in OOP in 5 words or less.",
-    type: 'short-answer',
-    correctAnswer: "hiding data behind access modifiers",
-    lectureNumber: 8
-  },
-  {
-    id: "q9",
-    question: "What is the primary purpose of version control systems like Git?",
-    options: [
-      "To compile code",
-      "To track changes to files over time",
-      "To debug applications",
-      "To host web applications"
-    ],
-    correctAnswer: 1,
-    type: 'multiple-choice',
-    lectureNumber: 9
-  },
-  {
-    id: "q10",
-    question: "Describe SQL vs NoSQL databases in 5 words or less.",
-    type: 'short-answer',
-    correctAnswer: "relational versus document-based storage",
-    lectureNumber: 10
-  },
-  {
-    id: "hard3",
-    question: "Explain in detail how virtual memory works in modern operating systems, including page tables, TLBs, and the relationship with physical memory.",
-    type: 'long-answer',
-    correctAnswer: "virtual memory paging swapping page tables TLB physical address translation",
-    lectureNumber: 9
-  },
-  {
-    id: "hard4",
-    question: "Discuss the evolution of neural networks and deep learning architectures, their advantages, limitations, and current applications in AI.",
-    type: 'long-answer',
-    correctAnswer: "neural networks deep learning backpropagation gradient descent convolutional recurrent transformers",
-    lectureNumber: 10
-  }
+  
 ];
 
 const Quiz: React.FC<QuizProps> = ({ 
@@ -179,9 +55,7 @@ const Quiz: React.FC<QuizProps> = ({
     
     // Otherwise, filter questions based on parameters
     const filteredByLecture = allQuestions.filter(
-      q => q.lectureNumber && 
-      q.lectureNumber >= parameters.fromLecture && 
-      q.lectureNumber <= parameters.toLecture
+      q => q.lectureNumber
     );
     
     // Further filter by difficulty
