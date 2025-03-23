@@ -15,8 +15,8 @@ embedding_model = SentenceTransformer("BAAI/bge-small-en")
 HISTORY = []  # Store conversation history in-memory for the purpose of hackathon
 
 
-def vectorize_and_store(file, course, title, user_id):
-    text = f"{title}:\n\n{extract_text(file)}"
+def vectorize_and_store(file, course, date, user_id):
+    text = f"Date: {date}\n\n{extract_text(file)}"
     embedding = get_embedding(text)
     documents = chroma_client.get_or_create_collection(name=user_id)
     documents.add(ids=str(uuid.uuid4()), documents=text, embeddings=embedding, metadatas={"course": course})

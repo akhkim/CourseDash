@@ -29,7 +29,7 @@ def upload_file():
     """Handles user file uploads."""
     file = request.files.get("file")
     course = request.form.get("course")
-    title = request.form.get("title")
+    date = request.form.get("date")
     user_id = request.form.get("user_id")
 
     if not file:
@@ -42,7 +42,7 @@ def upload_file():
         return jsonify({"error": "Unsupported file type"}), 400
 
     # Process the file and store in ChromaDB (for chatbot)
-    vectorize_and_store(file, course, title, user_id)
+    vectorize_and_store(file, course, date, user_id)
 
     return jsonify({"message": "File uploaded & processed successfully."})
 
