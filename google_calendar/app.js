@@ -17,6 +17,15 @@ console.log('addEvents:', typeof addEvents);
 dotenv.config();
 
 const app = express();
+app.use(express.json()); // To parse JSON requests
+
+// Enable CORS for all routes
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+});
+
 const upload = multer({ storage: multer.memoryStorage() }); // Store files in memory
 
 // To use __dirname
@@ -29,8 +38,6 @@ const FILE_TYPES = [
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
-
-app.use(express.json()); // To parse JSON requests
 
 app.get("/", (req, res) => {
     res.json({ message: "Welcome to the Course Dash API." });
@@ -128,7 +135,6 @@ app.post("/process_syllabus", upload.single("file"), async (req, res) => {
     }
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+const server = app.listen(8000, '0.0.0.0', () => {
+    console.log("Server is running on port 8000");
 });

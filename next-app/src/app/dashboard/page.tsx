@@ -12,6 +12,7 @@ import { Plus, Search, Loader2, BookOpen, Calendar, ExternalLink } from 'lucide-
 import { useToast } from "@/hooks/use-toast"
 import { Pointer } from "@/components/ui/coloured_pointer";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 interface Course {
   _id: string;
@@ -26,6 +27,8 @@ interface Course {
 }
 
 export default function DashboardPage() {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState<string | null>(null);
   const { user, loading } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
@@ -114,6 +117,53 @@ export default function DashboardPage() {
       setFilteredCourses([]);
     }
   }, [searchTerm, courses]);
+
+  
+  const handleMouseMove = (e: React.MouseEvent) => {
+    setMousePosition({ x: e.clientX, y: e.clientY });
+  };
+
+  // Replace handleAddToGoogleCalendar with:
+  const handleAddToGoogleCalendar = async () => {
+    setIsProcessing(true);
+    setProcessingError(null);
+    
+    try {
+      const response = await authFetch('/api/calendar', {
+        method: 'POST'
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add events to calendar');
+      }
+  
+      const successCount = (data.results || []).filter((r: any) => r.status === 'success').length;
+      const message = data.message || 'Unknown status';
+
+      toast({
+        title: successCount > 0 ? 'Success!' : 'No events added',
+        description: successCount > 0 
+          ? `Added events from ${successCount} syllabi!`
+          : message, // Updated message from API response
+      });
+  
+      await fetchCourses();
+  
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setProcessingError(errorMessage);
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+};
+
 
   // Process course data with actual stats
   const processCourseData = (coursesData: Course[]) => {
@@ -210,17 +260,6 @@ export default function DashboardPage() {
     router.push(`/dashboard/course/${courseId}`);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    setMousePosition({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleAddToGoogleCalendar = () => {
-    toast({
-      title: 'Google Calendar Integration',
-      description: 'Your courses are being synchronized with Google Calendar.',
-    });
-    // Actual implementation would make API calls to sync with Google Calendar
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 relative" onMouseMove={handleMouseMove}>
@@ -272,17 +311,26 @@ export default function DashboardPage() {
             >
               <div className={`absolute -inset-1 bg-white bg-opacity-30 rounded-lg blur-md transition-all duration-300 ${isCalendarButtonHovered ? 'opacity-100' : 'opacity-0'}`}></div>
               <Button 
-                onClick={handleAddToGoogleCalendar}
-                className="relative bg-white hover:bg-blue-50 text-indigo-600 hover:text-indigo-700 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 border-none"
-                size="lg"
-              >
-                <svg className={`h-5 w-5 transition-transform duration-300 ${isCalendarButtonHovered ? 'rotate-12' : 'rotate-0'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 3V5M18 3V5M3 9H21M5 8H19C20.1046 8 21 8.89543 21 10V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V10C3 8.89543 3.89543 8 5 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 17C13.6569 17 15 15.6569 15 14C15 12.3431 13.6569 11 12 11C10.3431 11 9 12.3431 9 14C9 15.6569 10.3431 17 12 17Z" fill="currentColor"/>
-                </svg>
-                Add to Google Calendar
-                <ExternalLink className={`h-4 w-4 ml-1 transition-all duration-300 ${isCalendarButtonHovered ? 'translate-x-1 -translate-y-1' : 'translate-x-0 translate-y-0'}`} />
-              </Button>
+  onClick={handleAddToGoogleCalendar}
+  className="relative bg-white hover:bg-blue-50 text-indigo-600 hover:text-indigo-700 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 border-none"
+  size="lg"
+  disabled={isProcessing}
+>
+  {isProcessing ? (
+    <div className="flex items-center gap-2">
+      <Spinner className="h-5 w-5 text-indigo-600" />
+      Processing...
+    </div>
+  ) : (
+    <>
+      <svg className={`h-5 w-5 transition-transform duration-300 ${isCalendarButtonHovered ? 'rotate-12' : 'rotate-0'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* ... existing SVG ... */}
+      </svg>
+      Add to Google Calendar
+      <ExternalLink className={`h-4 w-4 ml-1 transition-all duration-300 ${isCalendarButtonHovered ? 'translate-x-1 -translate-y-1' : 'translate-x-0 translate-y-0'}`} />
+    </>
+  )}
+</Button>
             </div>
           </div>
         </div>
