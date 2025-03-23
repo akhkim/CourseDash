@@ -21,29 +21,7 @@ import {
   Clock
 } from 'lucide-react';
 
-export default function Home() {
-  // Sample testimonials data
-  const testimonials = [
-    {
-      name: "Alex Johnson",
-      role: "Computer Science Student",
-      text: "CourseDash revolutionized how I organize my coursework. The AI-generated summaries are incredibly helpful during exam season!",
-      rating: 5
-    },
-    {
-      name: "Sophia Chen",
-      role: "Medical Student",
-      text: "The quiz generator has been a game-changer for my anatomy studies. I can quickly test my knowledge on specific topics.",
-      rating: 5
-    },
-    {
-      name: "Marcus Rodriguez",
-      role: "Engineering Major",
-      text: "I've tried many study apps, but CourseDash is by far the most intuitive. The schedule planning feature keeps me on track.",
-      rating: 4
-    }
-  ];
-  
+export default function Home() {  
   // Sample stats data
   const stats = [
     { value: "2,500+", label: "Lines of Code" },
@@ -88,12 +66,6 @@ export default function Home() {
               className="text-sm font-medium hover:text-primary transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all hover:after:w-full" 
             >
               How It Works
-            </a>
-            <a 
-              href="#testimonials" 
-              className="text-sm font-medium hover:text-primary transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all hover:after:w-full"
-            >
-              Testimonials
             </a>
             <a 
               href="#pricing" 
@@ -560,15 +532,15 @@ export default function Home() {
               <ul className="space-y-2">
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Features</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Pricing</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Testimonials</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Guide</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">About</a></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-medium mb-4">Company</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">About</a></li>
+              <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Terms of Service</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Blog</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Careers</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Contact</a></li>
@@ -578,7 +550,6 @@ export default function Home() {
             <div>
               <h4 className="font-medium mb-4">Legal</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Terms of Service</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Privacy Policy</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Cookies</a></li>
               </ul>
