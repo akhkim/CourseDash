@@ -12,7 +12,9 @@
 - [License](#license)
 
 ## Inspiration
-As a dedicated university student, I learned the difficulties of managing a crowded academic calendar by experience. Between lectures, office hours, tutorials, clubs, assignments, and exams, keeping everything organized and fully comprehended was a constant struggle. CourseDash emerged out of necessity for an intelligent, streamlined solution that not only handles your academic calendar but also augments your learning experience through AI-driven insights. We wanted to make something that would fill the gap between understanding and administration—a true study buddy.
+With the United Nations being a major sponsor of the hackathon, and human empowerment being the theme, we first looked through the UN Sustainable Development Goals, and number 4 (Quality Education), number 8 (Decent Work and Economic Growth), and number 10 (Reduced Inequality) caught my attention, as they all can be bettered through a quality learning assistant that keeps you and your learning on track, equally for everyone. 
+
+Furthermore, as dedicated university students, we learned the difficulties of managing a crowded academic calendar by experience. Between lectures, office hours, tutorials, clubs, assignments, and exams, keeping everything organized and fully comprehended was a constant struggle. CourseDash emerged out of necessity for an intelligent, streamlined solution that not only handles your academic calendar but also augments your learning experience through AI-driven insights. We wanted to make something that would fill the gap between understanding and administration—a true study buddy.
 
 ## Role
 CourseDash is an AI-powered study assistant that revolutionizes how you manage your academic life. It offers endless academic features including:
@@ -46,3 +48,19 @@ Another remarkable challenge that we faced was that we decided to rebase from Vi
 Throughout GenAI Genesis and the 36 hours we spent on CourseDash, a piece of knowledge we have learned was how to use Flask and TypeScript, given that those languages are used commonly in hackathons, and we will eventually get an opportunity to use the knowledge we learned today at another hackathon. However, the importance of this knowledge is miniscule compared to the joy of working on a project alongside friends. Spending 36 hours coding on one project with friends has reinforced our passion and joy for coding, and every group member unanimously wanted to continue building this project even after the end of the hackathon, which we think is a more valuable outcome than anything.
  
 ## Future Plans
+- Implement assessment tracking functionality to monitor student performance results
+- Create flashcard generation based on lecture content, tutorials, and quiz materials
+- Build an in-depth, personalized study plan system that:
+    -  Accommodates student schedules and preferences
+    -  Tailors study recommendations to individual learning styles and time constraints
+    -  Provides topic-specific preparation guides for each course
+    -  Offers hour-by-hour scheduling recommendations before assessments
+- Incorporate intelligent course difficulty analysis using Gemini's web search function to:
+    - Allocate additional study time for challenging courses
+    - Provide more thorough explanations for complex topics
+    - Implement more flexible scheduling for easier "bird" courses
+    - Customize learning approaches based on course reputation and difficulty
+- Full functionalities of the assignments tab:
+    - Assignments are automatically parsed and recorded based on the syllabus
+    - Upcoming assignments are shown in the dashboard
+    - Create practice exams based on past exams that the users upload using the course-specialized LLM model
