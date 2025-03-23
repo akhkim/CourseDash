@@ -303,9 +303,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         method: 'POST',
         body: formData  // This is correct - sending FormData
       });
+      // console.log("Upload result:", result);
       
       // Create a simplified lecture object for display
       const resultData = await result.json();
+      console.log("Result data:", resultData);
       const newLecture = {
         id: Date.now().toString(),
         title: resultData.title || data.file.name.split('.')[0], // Fallback to filename if API title is missing
@@ -325,6 +327,36 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
           ...courseData,
           lectureNotes: [newLecture]
         });
+      }
+      
+      // Update the course in the database with the new lecture data
+      try {
+        const updatedCourseData = courseData ? {
+          ...courseData,
+          lectureNotes: courseData.lectureNotes ? 
+            [newLecture, ...courseData.lectureNotes] : 
+            [newLecture]
+        } : null;
+        
+        if (updatedCourseData) {
+          const updateResponse = await authFetch(`/api/courses/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedCourseData),
+          });
+          
+          if (!updateResponse.ok) {
+            console.warn('Failed to persist lecture to database, but it was added to the UI');
+          } else {
+            console.log('Course updated in database with new lecture: ', updatedCourseData);
+          }
+        }
+      } catch (dbError) {
+        console.error('Error updating course in database:', dbError);
+        // We don't show an error toast here as the lecture was added to the UI successfully
+        // and we don't want to confuse the user
       }
       
       // Reset the form state
