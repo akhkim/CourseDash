@@ -1,6 +1,12 @@
 import pdfplumber
 from pptx import Presentation
 from docx import Document
+from google import generativeai as genai
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+genai.configure(api_key=os.getenv("GENAI_API_KEY"))
 
 
 def extract_text(file):
@@ -38,3 +44,17 @@ def extract_text_from_docx(file):
     for para in doc.paragraphs:
         text += para.text
     return text
+
+
+def extract_title(file):
+    text = extract_text(file)
+    model = genai.GenerativeModel(model_name='gemini-2.0-flash')
+    response = model.generate_content(f"Instruction:\nExtract the lecture title and respond with only the title and nothing else. Do not include course code and make sure the title is coherent. Do not append newline to your response.\n\nLecture Content:\n{text}\n\nTitle:\n")
+    return response.text
+
+
+def summarise(file):
+    text = extract_text(file)
+    model = genai.GenerativeModel(model_name='gemini-2.0-flash')
+    response = model.generate_content(f"Instruction:\nSummarize what is taught in the lecture in three concise sentences. Respond with only the summary and nothing else. Do not append newline to your response.\n\nLecture Content:\n{text}\n\nSummary:\n")
+    return response.text

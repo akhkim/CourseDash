@@ -4,7 +4,7 @@ export const fetchAssistantResponse = async (userMessage: string) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query: userMessage, course: "course2" }),
+      body: JSON.stringify({ query: userMessage, course: "course2", user_id: "user1" }),
     });
   
     if (!response.ok) {
