@@ -24,6 +24,14 @@ interface Course {
   completionRate?: number;
   upcomingDeadlines?: number;
   lecturesUploaded?: number; // Added field for lectures uploaded
+  lectureNotes?: Array<{
+    id: string;
+    title: string;
+    fileName: string;
+    date: string;
+    fileType: string;
+    summary: string;
+  }>;
 }
 
 export default function DashboardPage() {
@@ -168,11 +176,12 @@ export default function DashboardPage() {
   // Process course data with actual stats
   const processCourseData = (coursesData: Course[]) => {
     return coursesData.map(course => {
-      // Here we would typically calculate these values from actual data
-      // For now, setting fixed values as placeholders until real data is available
+      // Count actual lectures if available
+      const lectureCount = course.lectureNotes ? course.lectureNotes.length : 0;
+      
       return {
         ...course,
-        lecturesUploaded: Math.floor(Math.random() * 15) + 5 // Random number of lectures between 5-20
+        lecturesUploaded: lectureCount
       };
     });
   };
@@ -258,11 +267,130 @@ export default function DashboardPage() {
     router.push(`/dashboard/course/${courseId}`);
   };
 
+  // Sort sessions by proximity to the current day and time
+  const sortSessionsByProximity = (
+    sessions: Array<{ type: string; day: string; time: string }>
+  ): Array<{ type: string; day: string; time: string }> => {
+    if (!sessions.length) return [];
+    
+    const now = new Date();
+    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    // Map day strings to numbers (0-6)
+    const dayMap: Record<string, number> = {
+      'Sun': 0, 'Sunday': 0,
+      'Mon': 1, 'Monday': 1,
+      'Tue': 2, 'Tuesday': 2,
+      'Wed': 3, 'Wednesday': 3,
+      'Thu': 4, 'Thursday': 4,
+      'Fri': 5, 'Friday': 5,
+      'Sat': 6, 'Saturday': 6
+    };
+    
+    return [...sessions].sort((a, b) => {
+      // Parse days to numeric values
+      const dayA = dayMap[a.day] ?? -1;
+      const dayB = dayMap[b.day] ?? -1;
+      
+      if (dayA === -1 || dayB === -1) {
+        console.error("Unknown day format:", a.day, b.day);
+        return 0;
+      }
+      
+      // Parse start times
+      const startTimeA = a.time.split('-')[0].trim();
+      const startTimeB = b.time.split('-')[0].trim();
+      
+      const [hourA, minuteA] = startTimeA.split(':').map(Number);
+      const [hourB, minuteB] = startTimeB.split(':').map(Number);
+      
+      // Calculate days from now (0 = today, 1 = tomorrow, etc.)
+      let daysFromNowA = (dayA - currentDay + 7) % 7;
+      let daysFromNowB = (dayB - currentDay + 7) % 7;
+      
+      // If it's today but the time has passed, it's effectively 7 days away
+      if (daysFromNowA === 0 && (hourA < currentHour || (hourA === currentHour && minuteA < currentMinute))) {
+        daysFromNowA = 7;
+      }
+      if (daysFromNowB === 0 && (hourB < currentHour || (hourB === currentHour && minuteB < currentMinute))) {
+        daysFromNowB = 7;
+      }
+      
+      // First compare by days from now
+      if (daysFromNowA !== daysFromNowB) {
+        return daysFromNowA - daysFromNowB;
+      }
+      
+      // If same day, compare by time
+      return (hourA * 60 + minuteA) - (hourB * 60 + minuteB);
+    });
+  };
+
+  // Parse course times into structured objects
+  const parseCourseTimes = (times: string[] = []): Array<{ type: string; day: string; time: string }> => {
+    const result: Array<{ type: string; day: string; time: string }> = [];
+  
+    if (!Array.isArray(times)) {
+      console.error("Invalid input: times is not an array", times);
+      return result;
+    }
+  
+    for (const time of times) {
+      try {
+        if (typeof time !== 'string' || !time.includes(':')) continue;
+  
+        // Use regex split to only split on the first colon
+        const [typeWithColon, details] = time.split(/:(.+)/).map(str => str.trim());
+        if (!typeWithColon || !details) continue;
+  
+        const type = typeWithColon.toLowerCase();
+  
+        result.push({
+          type: type === 'lecture' ? 'Lecture' :
+                type === 'tutorial' ? 'Tutorial' :
+                type === 'officehours' ? 'Office Hours' :
+                type.charAt(0).toUpperCase() + type.slice(1), 
+          day: details.split(' ')[0],  // Extracts "Wed" or "Thu"
+          time: details.substring(details.indexOf(' ') + 1) // Extracts full time "8:00-09:00"
+        });
+  
+      } catch (err) {
+        console.error("Error parsing time:", time, err);
+      }
+    }
+  
+    return result;
+  };
 
   // Format the lecture time for display
   const formatLectureTimes = (times: string[]) => {
     if (!times || times.length === 0) return "No scheduled times";
-    return times.slice(0, 2).join(", ") + (times.length > 2 ? "..." : "");
+    
+    // Parse all times
+    const sessions = parseCourseTimes(times);
+    
+    // Filter to only include lectures
+    const lectureSessions = sessions.filter(session => 
+      session.type === 'Lecture' || session.type.toLowerCase() === 'lecture'
+    );
+    
+    // If no lectures are found, return a message
+    if (lectureSessions.length === 0) {
+      return "No lectures scheduled";
+    }
+    
+    // Sort lectures by proximity to current time
+    const sortedLectures = sortSessionsByProximity(lectureSessions);
+    
+    // Return only the next upcoming lecture
+    if (sortedLectures.length > 0) {
+      const nextLecture = sortedLectures[0];
+      return `Next: ${nextLecture.day} ${nextLecture.time}`;
+    }
+    
+    return "No scheduled times";
   };
 
   return (

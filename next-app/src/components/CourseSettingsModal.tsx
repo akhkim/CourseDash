@@ -193,11 +193,9 @@ const CourseSettingsModal: React.FC<CourseSettingsModalProps> = ({
         
         reader.readAsDataURL(syllabus);
         updatedCourse.syllabusPDF = await base64Promise;
-        updatedCourse.hasSyllabus = true;
       } else if (course?.syllabusPDF) {
         // Keep existing syllabus if no new one was uploaded
         updatedCourse.syllabusPDF = course.syllabusPDF;
-        updatedCourse.hasSyllabus = true;
       }
       
       onCourseUpdate(updatedCourse);

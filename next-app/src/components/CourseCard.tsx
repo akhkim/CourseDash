@@ -14,93 +14,139 @@ interface Course {
   createdAt: string;
 }
 
-// Helper function to get the next lecture time
-const getNextLecture = (times: string[] = []): string | null => {
-  // Log the times array for debugging
-  console.log("Times array:", times);
+/**
+ * Helper function to parse course times and return structured session objects
+ */
+const parseCourseTimes = (times: string[] = []): Array<{ type: string; day: string; time: string }> => {
+  const result: Array<{ type: string; day: string; time: string }> = [];
+
+  if (!Array.isArray(times)) {
+    console.error("Invalid input: times is not an array", times);
+    return result;
+  }
+
+  for (const time of times) {
+    try {
+      if (typeof time !== 'string' || !time.includes(':')) continue;
+
+      // Use regex split to only split on the first colon
+      const [typeWithColon, details] = time.split(/:(.+)/).map(str => str.trim());
+      if (!typeWithColon || !details) continue;
+
+      const type = typeWithColon.toLowerCase();
+
+      result.push({
+        type: type === 'lecture' ? 'Lecture' :
+              type === 'tutorial' ? 'Tutorial' :
+              type === 'officehours' ? 'Office Hours' :
+              type.charAt(0).toUpperCase() + type.slice(1), 
+        day: details.split(' ')[0],  // Extracts "Wed" or "Thu"
+        time: details.substring(details.indexOf(' ') + 1) // Extracts full time "8:00-09:00"
+      });
+
+    } catch (err) {
+      console.error("Error parsing time:", time, err);
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Sorts sessions by proximity to the current day and time
+ */
+const sortSessionsByProximity = (
+  sessions: Array<{ type: string; day: string; time: string }>
+): Array<{ type: string; day: string; time: string }> => {
+  if (!sessions.length) return [];
   
+  const now = new Date();
+  const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  
+  // Map day strings to numbers (0-6)
+  const dayMap: Record<string, number> = {
+    'Sun': 0, 'Sunday': 0,
+    'Mon': 1, 'Monday': 1,
+    'Tue': 2, 'Tuesday': 2,
+    'Wed': 3, 'Wednesday': 3,
+    'Thu': 4, 'Thursday': 4,
+    'Fri': 5, 'Friday': 5,
+    'Sat': 6, 'Saturday': 6
+  };
+  
+  return [...sessions].sort((a, b) => {
+    // Parse days to numeric values
+    const dayA = dayMap[a.day] ?? -1;
+    const dayB = dayMap[b.day] ?? -1;
+    
+    if (dayA === -1 || dayB === -1) {
+      console.error("Unknown day format:", a.day, b.day);
+      return 0;
+    }
+    
+    // Parse start times (assuming format like "9:00-10:00" or "9:00-10:00")
+    const startTimeA = a.time.split('-')[0].trim();
+    const startTimeB = b.time.split('-')[0].trim();
+    
+    const [hourA, minuteA] = startTimeA.split(':').map(Number);
+    const [hourB, minuteB] = startTimeB.split(':').map(Number);
+    
+    // Calculate days from now (0 = today, 1 = tomorrow, etc.)
+    let daysFromNowA = (dayA - currentDay + 7) % 7;
+    let daysFromNowB = (dayB - currentDay + 7) % 7;
+    
+    // If it's today but the time has passed, it's effectively 7 days away
+    if (daysFromNowA === 0 && (hourA < currentHour || (hourA === currentHour && minuteA < currentMinute))) {
+      daysFromNowA = 7;
+    }
+    if (daysFromNowB === 0 && (hourB < currentHour || (hourB === currentHour && minuteB < currentMinute))) {
+      daysFromNowB = 7;
+    }
+    
+    // First compare by days from now
+    if (daysFromNowA !== daysFromNowB) {
+      return daysFromNowA - daysFromNowB;
+    }
+    
+    // If same day, compare by time
+    return (hourA * 60 + minuteA) - (hourB * 60 + minuteB);
+  });
+};
+
+/**
+ * Gets the next upcoming lecture or session using the sortSessionsByProximity function
+ */
+const getNextLecture = (times: string[] = []): string | null => {
   if (!times || !Array.isArray(times) || times.length === 0) {
-    console.log("No times available");
     return null;
   }
   
-  const now = new Date();
-  const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
-  const currentTime = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+  // Parse all times
+  const sessions = parseCourseTimes(times);
   
-  // Filter for lecture times
-  const lectureTimes = times.filter(time => time && typeof time === 'string' && time.startsWith('lecture:'));
-  console.log("Filtered lecture times:", lectureTimes);
+  // Filter to only include lectures
+  const lectureSessions = sessions.filter(session => 
+    session.type === 'Lecture' || session.type.toLowerCase() === 'lecture'
+  );
   
-  if (lectureTimes.length === 0) return null;
-  
-  // Parse times to find the next one
-  const parsedTimes = lectureTimes.map(time => {
-    try {
-      const parts = time.split(':');
-      if (parts.length < 2) return null;
-      
-      const timeParts = parts[1].trim().split(' ');
-      if (timeParts.length < 2) return null;
-      
-      const day = timeParts[0];
-      const timeRange = timeParts[1];
-      const [startTime] = timeRange.split('-');
-      
-      return {
-        day,
-        time: startTime,
-        original: time
-      };
-    } catch (e) {
-      console.error("Error parsing time:", time, e);
-      return null;
-    }
-  }).filter(Boolean); // Remove failed parses
-
-  if (parsedTimes.length === 0) return null;
-  
-  // First, check if there's a lecture later today
-  const todaysLectures = parsedTimes.filter(lecture => lecture.day === currentDay && lecture.time > currentTime);
-  if (todaysLectures.length > 0) {
-    // Sort by time to get the next one today
-    todaysLectures.sort((a, b) => a.time.localeCompare(b.time));
-    return todaysLectures[0].original;
+  // If no lectures are found, return null
+  if (lectureSessions.length === 0) {
+    return null;
   }
   
-  // If no lectures later today, find the next lecture based on day of week
-  const dayOrder = {'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6};
-  const currentDayIndex = dayOrder[currentDay];
+  // Sort lectures by proximity to current time
+  const sortedLectures = sortSessionsByProximity(lectureSessions);
   
-  // Group lectures by day
-  const lecturesByDay = {};
-  parsedTimes.forEach(lecture => {
-    if (!lecturesByDay[lecture.day]) {
-      lecturesByDay[lecture.day] = [];
-    }
-    lecturesByDay[lecture.day].push(lecture);
-  });
+  // Return the next upcoming lecture
+  if (sortedLectures.length > 0) {
+    const nextLecture = sortedLectures[0];
+    // Format it back to the original format for compatibility with existing code
+    return `lecture: ${nextLecture.day} ${nextLecture.time}`;
+  }
   
-  // Find the next day with lectures
-  const daysWithLectures = Object.keys(lecturesByDay);
-  if (daysWithLectures.length === 0) return null;
-  
-  // Sort days by their distance from current day
-  daysWithLectures.sort((a, b) => {
-    const aDist = (dayOrder[a] - currentDayIndex + 7) % 7;
-    const bDist = (dayOrder[b] - currentDayIndex + 7) % 7;
-    return aDist - bDist;
-  });
-  
-  // Get the earliest lecture from the next day with lectures
-  // Skip today as we've already checked it
-  const nextLectureDay = daysWithLectures.find(day => day !== currentDay) || daysWithLectures[0];
-  const nextDayLectures = lecturesByDay[nextLectureDay];
-  
-  // Sort lectures for that day by time
-  nextDayLectures.sort((a, b) => a.time.localeCompare(b.time));
-  
-  return nextDayLectures[0].original;
+  return null;
 };
 
 // Helper function to format the lecture time for display
@@ -118,7 +164,7 @@ const formatLectureTime = (lectureTime: string): string => {
     const day = timeParts[0];
     const timeRange = timeParts[1];
     
-    return `${day} ${timeRange}:00`;
+    return `${day} ${timeRange}`;
   } catch (e) {
     console.error("Error formatting lecture time:", e);
     return lectureTime;
@@ -134,7 +180,6 @@ export function CourseCard({
 }) {
   const router = useRouter();
   const nextLecture = getNextLecture(course.times);
-  console.log("Next lecture for course", course.name, ":", nextLecture);
   
   return (
     <Card 
@@ -159,7 +204,7 @@ export function CourseCard({
           )}
           
           {nextLecture ? (
-            <div className="flex items-center gapborder-t-4 border-t-blue-500-2">
+            <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 opacity-70" />
               <span className="text-sm text-muted-foreground">
                 Next: {formatLectureTime(nextLecture)}
@@ -169,7 +214,7 @@ export function CourseCard({
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 opacity-70" />
               <span className="text-sm text-muted-foreground">
-                No scheduled lectures
+                No scheduled sessions
               </span>
             </div>
           )}
