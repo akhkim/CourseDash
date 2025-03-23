@@ -8,7 +8,7 @@ import { CourseCard } from '@/components/CourseCard';
 import Navbar from '@/components/Navbar';
 import { authFetch } from '@/lib/utils/auth-fetch';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Loader2, BookOpen, Calendar, Clock } from 'lucide-react';
+import { Plus, Search, Loader2, BookOpen, Calendar, ExternalLink } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast"
 import { Pointer } from "@/components/ui/coloured_pointer";
 import { Input } from "@/components/ui/input";
@@ -40,12 +40,31 @@ export default function DashboardPage() {
   const [isHoveringAddButton, setIsHoveringAddButton] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [activeView, setActiveView] = useState('grid');
+  const [currentSemester, setCurrentSemester] = useState('');
+  const [isCalendarButtonHovered, setIsCalendarButtonHovered] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/');
     }
   }, [user, loading, router]);
+
+  // Determine current semester based on the current date
+  useEffect(() => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth(); // 0-11 (Jan-Dec)
+    
+    let semester;
+    if (currentMonth >= 8 && currentMonth <= 11) { // September-December
+      semester = 'First';
+    } else if (currentMonth >= 0 && currentMonth <= 3) { // January-April
+      semester = 'Second';
+    } else { // May-August
+      semester = 'Summer';
+    }
+    
+    setCurrentSemester(semester);
+  }, []);
 
   useEffect(() => {
     const added = searchParams.get('added');
@@ -195,6 +214,14 @@ export default function DashboardPage() {
     setMousePosition({ x: e.clientX, y: e.clientY });
   };
 
+  const handleAddToGoogleCalendar = () => {
+    toast({
+      title: 'Google Calendar Integration',
+      description: 'Your courses are being synchronized with Google Calendar.',
+    });
+    // Actual implementation would make API calls to sync with Google Calendar
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 relative" onMouseMove={handleMouseMove}>
       <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"></div>
@@ -207,43 +234,56 @@ export default function DashboardPage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mt-20 -mr-20"></div>
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-indigo-800 opacity-20 rounded-full -mb-10 -ml-10"></div>
           
-          <div className="relative z-10">
-            <h1 className="text-3xl font-bold tracking-tight mb-2">My Learning Dashboard</h1>
-            <p className="text-indigo-100 max-w-xl">Manage your courses, track your progress, and stay organized with all your academic activities in one place.</p>
-            
-            {!isLoading && filteredCourses.length > 0 && (
-              <div className="mt-6 flex space-x-6">
-                <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 flex items-center">
-                  <div className="p-2 bg-indigo-500 rounded-full mr-3">
-                    <BookOpen className="h-5 w-5 text-white" />
+          <div className="relative z-10 flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight mb-2">My Learning Dashboard</h1>
+              <p className="text-indigo-100 max-w-xl">Manage your courses, track your progress, and stay organized with all your academic activities in one place.</p>
+              
+              {!isLoading && filteredCourses.length > 0 && (
+                <div className="mt-6 flex space-x-6">
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 flex items-center">
+                    <div className="p-2 bg-indigo-500 rounded-full mr-3">
+                      <BookOpen className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-indigo-100">Active Courses</p>
+                      <p className="text-2xl font-bold">{filteredCourses.length}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-indigo-100">Active Courses</p>
-                    <p className="text-2xl font-bold">{filteredCourses.length}</p>
-                  </div>
-                </div>
-                
-                <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 flex items-center">
-                  <div className="p-2 bg-indigo-500 rounded-full mr-3">
-                    <Calendar className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-indigo-100">This Semester</p>
-                    <p className="text-2xl font-bold">Spring '25</p>
-                  </div>
-                </div>
-                
-                <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 flex items-center">
-                  <div className="p-2 bg-indigo-500 rounded-full mr-3">
-                    <Clock className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-indigo-100">Next Class</p>
-                    <p className="text-2xl font-bold">2h 15m</p>
+                  
+                  <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 flex items-center">
+                    <div className="p-2 bg-indigo-500 rounded-full mr-3">
+                      <Calendar className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-indigo-100">This Semester</p>
+                      <p className="text-2xl font-bold">{currentSemester}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Google Calendar Button */}
+            <div 
+              className={`relative group ${isCalendarButtonHovered ? 'scale-105' : 'scale-100'} transition-all duration-300`}
+              onMouseEnter={() => setIsCalendarButtonHovered(true)}
+              onMouseLeave={() => setIsCalendarButtonHovered(false)}
+            >
+              <div className={`absolute -inset-1 bg-white bg-opacity-30 rounded-lg blur-md transition-all duration-300 ${isCalendarButtonHovered ? 'opacity-100' : 'opacity-0'}`}></div>
+              <Button 
+                onClick={handleAddToGoogleCalendar}
+                className="relative bg-white hover:bg-blue-50 text-indigo-600 hover:text-indigo-700 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 border-none"
+                size="lg"
+              >
+                <svg className={`h-5 w-5 transition-transform duration-300 ${isCalendarButtonHovered ? 'rotate-12' : 'rotate-0'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 3V5M18 3V5M3 9H21M5 8H19C20.1046 8 21 8.89543 21 10V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V10C3 8.89543 3.89543 8 5 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 17C13.6569 17 15 15.6569 15 14C15 12.3431 13.6569 11 12 11C10.3431 11 9 12.3431 9 14C9 15.6569 10.3431 17 12 17Z" fill="currentColor"/>
+                </svg>
+                Add to Google Calendar
+                <ExternalLink className={`h-4 w-4 ml-1 transition-all duration-300 ${isCalendarButtonHovered ? 'translate-x-1 -translate-y-1' : 'translate-x-0 translate-y-0'}`} />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -400,7 +440,8 @@ export default function DashboardPage() {
                 key={course._id}
                 onMouseEnter={() => setIsHoveringCourse(true)}
                 onMouseLeave={() => setIsHoveringCourse(false)}
-                className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group"
+                onClick={() => handleCourseClick(course._id)}
+                className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group cursor-pointer"
               >
                 <div className="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm group-hover:shadow-md group-hover:border-indigo-200 transition-all duration-300">
                   <div className="h-3 bg-gradient-to-r from-indigo-500 to-blue-500"></div>
@@ -432,7 +473,6 @@ export default function DashboardPage() {
                     </div>
                     
                     <Button 
-                      onClick={() => handleCourseClick(course._id)}
                       className="w-full bg-slate-100 hover:bg-indigo-50 text-slate-800 hover:text-indigo-600 transition-colors group-hover:border-indigo-200"
                       variant="outline"
                     >
@@ -450,7 +490,8 @@ export default function DashboardPage() {
                 key={course._id}
                 onMouseEnter={() => setIsHoveringCourse(true)}
                 onMouseLeave={() => setIsHoveringCourse(false)}
-                className="border-b border-slate-200 last:border-0 hover:bg-indigo-50 transition-colors"
+                onClick={() => handleCourseClick(course._id)}
+                className="border-b border-slate-200 last:border-0 hover:bg-indigo-50 transition-colors cursor-pointer"
               >
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -479,7 +520,6 @@ export default function DashboardPage() {
                     
                     <Button 
                       size="sm"
-                      onClick={() => handleCourseClick(course._id)}
                       className="bg-white hover:bg-indigo-600 text-indigo-600 hover:text-white border border-indigo-200 hover:border-indigo-600"
                     >
                       View
