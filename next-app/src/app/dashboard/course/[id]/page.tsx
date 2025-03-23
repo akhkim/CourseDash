@@ -299,6 +299,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       });
       console.log("Upload result:", result);
 
+      const result2 = await fetch('/api/documents', {
+        method: 'POST',
+        body: formData  // This is correct - sending FormData
+      });
+      // console.log("Upload result:", result);
+
       // Add a delay to ensure the API call has completed
       await new Promise(resolve => setTimeout(resolve, 1000));
       
