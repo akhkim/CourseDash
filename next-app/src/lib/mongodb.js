@@ -6,10 +6,6 @@ const options = {};
 let client;
 let clientPromise;
 
-// TypeScript global augmentation
-declare global {
-  var _mongoClientPromise: Promise<MongoClient>;
-}
 
 if (!process.env.MONGODB_URI) {
   console.warn('No MONGODB_URI defined, using default connection string');
