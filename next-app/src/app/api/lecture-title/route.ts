@@ -45,11 +45,12 @@ export async function POST(request: NextRequest) {
       const fileName = file.name;
       const title = fileName.split('.')[0];
       
-      // Return the filename as the title
+      // Return the filename as the title and a generic summary
       return NextResponse.json({
         title: title,
+        summary: `Content from ${fileName}. This file contains lecture material that may include important concepts, examples, and explanations related to the course.`,
         source: 'filename',
-        message: 'Title extracted from filename due to Flask API unavailability'
+        message: 'Title and summary generated from filename due to Flask API unavailability'
       });
     }
   } catch (error) {

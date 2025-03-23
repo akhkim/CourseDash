@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, AlertCircle, BrainCircuit, Award, Clock, ArrowLeft } from 'lucide-react';
+import { Check, AlertCircle, BrainCircuit, Award, Clock, ArrowLeft, BookOpen } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { QuizParameters } from './QuizParameters';
 
@@ -71,16 +71,16 @@ const allQuestions: QuizQuestion[] = [
   // Medium questions
   {
     id: "medium1",
-    question: "Explain the difference between a stack and a queue data structure.",
+    question: "Explain the difference between a stack and a queue data structure in 5 words or less.",
     type: 'short-answer',
-    correctAnswer: "stack queue LIFO FIFO",
+    correctAnswer: "stack LIFO queue FIFO",
     lectureNumber: 4
   },
   {
     id: "medium2",
-    question: "What is recursion and provide a simple example of a recursive function.",
+    question: "Define recursion in 5 words or less.",
     type: 'short-answer',
-    correctAnswer: "recursion function calls itself factorial fibonacci",
+    correctAnswer: "function calls itself",
     lectureNumber: 5
   },
   // Hard questions
@@ -90,6 +90,13 @@ const allQuestions: QuizQuestion[] = [
     type: 'long-answer',
     correctAnswer: "quicksort O(n log n) O(n²) partitioning pivot comparison",
     lectureNumber: 6
+  },
+  {
+    id: "hard2",
+    question: "Explain how the TCP/IP protocol suite works, its different layers, and how they interact with each other to facilitate internet communication.",
+    type: 'long-answer',
+    correctAnswer: "TCP IP layers encapsulation packets transmission control protocol internet",
+    lectureNumber: 7
   },
   // Additional questions for lecture coverage
   {
@@ -107,9 +114,9 @@ const allQuestions: QuizQuestion[] = [
   },
   {
     id: "q8",
-    question: "Explain the concept of encapsulation in object-oriented programming.",
+    question: "Explain encapsulation in OOP in 5 words or less.",
     type: 'short-answer',
-    correctAnswer: "encapsulation data hiding access modifiers private public",
+    correctAnswer: "hiding data behind access modifiers",
     lectureNumber: 8
   },
   {
@@ -127,9 +134,23 @@ const allQuestions: QuizQuestion[] = [
   },
   {
     id: "q10",
-    question: "Describe the differences between SQL and NoSQL databases.",
+    question: "Describe SQL vs NoSQL databases in 5 words or less.",
     type: 'short-answer',
-    correctAnswer: "SQL relational schema NoSQL document flexible",
+    correctAnswer: "relational versus document-based storage",
+    lectureNumber: 10
+  },
+  {
+    id: "hard3",
+    question: "Explain in detail how virtual memory works in modern operating systems, including page tables, TLBs, and the relationship with physical memory.",
+    type: 'long-answer',
+    correctAnswer: "virtual memory paging swapping page tables TLB physical address translation",
+    lectureNumber: 9
+  },
+  {
+    id: "hard4",
+    question: "Discuss the evolution of neural networks and deep learning architectures, their advantages, limitations, and current applications in AI.",
+    type: 'long-answer',
+    correctAnswer: "neural networks deep learning backpropagation gradient descent convolutional recurrent transformers",
     lectureNumber: 10
   }
 ];
@@ -147,6 +168,7 @@ const Quiz: React.FC<QuizProps> = ({
   const [score, setScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [wordCount, setWordCount] = useState(0);
 
   useEffect(() => {
     // If custom questions are provided, use them
@@ -166,13 +188,13 @@ const Quiz: React.FC<QuizProps> = ({
     let difficultyFiltered: QuizQuestion[];
     switch (parameters.difficulty) {
       case 'easy':
-        difficultyFiltered = filteredByLecture.filter(q => q.id.startsWith('easy') || !q.id.startsWith('medium') && !q.id.startsWith('hard'));
+        difficultyFiltered = filteredByLecture.filter(q => q.type === 'multiple-choice');
         break;
       case 'medium':
-        difficultyFiltered = filteredByLecture.filter(q => q.id.startsWith('medium') || (q.type === 'multiple-choice' && !q.id.startsWith('easy')));
+        difficultyFiltered = filteredByLecture.filter(q => q.type === 'short-answer');
         break;
       case 'hard':
-        difficultyFiltered = filteredByLecture.filter(q => q.id.startsWith('hard') || q.type === 'long-answer');
+        difficultyFiltered = filteredByLecture.filter(q => q.type === 'long-answer');
         break;
       default:
         difficultyFiltered = filteredByLecture;
@@ -196,7 +218,14 @@ const Quiz: React.FC<QuizProps> = ({
   };
   
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setTextAnswer(e.target.value);
+    const text = e.target.value;
+    setTextAnswer(text);
+    
+    // Count words for medium difficulty questions
+    if (questions[currentQuestion]?.type === 'short-answer') {
+      const words = text.trim().split(/\s+/);
+      setWordCount(words.length === 1 && words[0] === '' ? 0 : words.length);
+    }
   };
   
   const handleCheckAnswer = () => {
@@ -211,6 +240,11 @@ const Quiz: React.FC<QuizProps> = ({
       }
     } else {
       if (textAnswer.trim() === '') return;
+      
+      // For medium difficulty, check that answer doesn't exceed 5 words
+      if (currentQ.type === 'short-answer' && wordCount > 5) {
+        return;
+      }
       
       setIsAnswered(true);
       
@@ -239,6 +273,7 @@ const Quiz: React.FC<QuizProps> = ({
       setSelectedOption(null);
       setTextAnswer("");
       setIsAnswered(false);
+      setWordCount(0);
     } else {
       setIsCompleted(true);
       onComplete(score + (isAnswered && (
@@ -255,6 +290,7 @@ const Quiz: React.FC<QuizProps> = ({
     setIsAnswered(false);
     setScore(0);
     setIsCompleted(false);
+    setWordCount(0);
   };
   
   const getDifficultyColor = () => {
@@ -335,10 +371,19 @@ const Quiz: React.FC<QuizProps> = ({
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground flex items-center gap-1 pl-4">
             Question {currentQuestion + 1} of {questions.length}
+            {currentQ.lectureNumber && (
+              <>
+                <span className="mx-1">•</span>
+                <span className="flex items-center gap-1">
+                  <BookOpen className="h-3 w-3" />
+                  Lecture {currentQ.lectureNumber}
+                </span>
+              </>
+            )}
           </p>
-          <p className={cn("text-sm font-medium", getDifficultyColor())}>
+          <p className={cn("text-sm font-medium pl-4", getDifficultyColor())}>
             {getDifficultyTitle()}
           </p>
         </div>
@@ -352,7 +397,7 @@ const Quiz: React.FC<QuizProps> = ({
             <ArrowLeft className="h-4 w-4" />
             Adjust Parameters
           </Button>
-          <div className="text-sm font-medium">
+          <div className="text-sm font-medium pr-5">
             Score: {score}
           </div>
         </div>
@@ -406,18 +451,48 @@ const Quiz: React.FC<QuizProps> = ({
             </RadioGroup>
           )}
           
-          {(currentQ.type === 'short-answer' || currentQ.type === 'long-answer') && (
+          {currentQ.type === 'short-answer' && (
             <div>
               <Textarea 
                 value={textAnswer}
                 onChange={handleTextChange}
-                placeholder={currentQ.type === 'short-answer' ? 
-                  "Enter your brief answer (1-2 sentences)" : 
-                  "Enter your detailed analysis"
-                }
+                placeholder="Enter your answer (maximum 5 words)"
                 className={cn(
-                  "w-full transition-all",
-                  currentQ.type === 'long-answer' ? "min-h-32" : "min-h-20",
+                  "w-full transition-all min-h-20",
+                  isAnswered && "border-primary",
+                  wordCount > 5 && !isAnswered && "border-red-500"
+                )}
+                disabled={isAnswered}
+              />
+              
+              <div className="flex justify-between mt-2">
+                <div className={cn(
+                  "text-xs",
+                  wordCount > 5 ? "text-red-500" : "text-muted-foreground"
+                )}>
+                  {wordCount}/5 words {wordCount > 5 && "- Please reduce your answer to 5 words or less"}
+                </div>
+              </div>
+              
+              {isAnswered && (
+                <div className="mt-4 bg-muted/20 p-3 rounded-md border">
+                  <h4 className="text-sm font-medium mb-1">Key concepts to include:</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {(currentQ.correctAnswer as string).split(' ').join(', ')}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {currentQ.type === 'long-answer' && (
+            <div>
+              <Textarea 
+                value={textAnswer}
+                onChange={handleTextChange}
+                placeholder="Enter your detailed analysis"
+                className={cn(
+                  "w-full transition-all min-h-40",
                   isAnswered && "border-primary"
                 )}
                 disabled={isAnswered}
@@ -440,9 +515,9 @@ const Quiz: React.FC<QuizProps> = ({
         {!isAnswered ? (
           <Button 
             onClick={handleCheckAnswer}
-            disabled={currentQ.type === 'multiple-choice' ? 
-              selectedOption === null : 
-              textAnswer.trim() === ''
+            disabled={
+              (currentQ.type === 'multiple-choice' ? selectedOption === null : textAnswer.trim() === '') ||
+              (currentQ.type === 'short-answer' && wordCount > 5)
             }
           >
             Check Answer

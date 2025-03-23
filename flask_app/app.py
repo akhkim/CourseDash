@@ -37,6 +37,9 @@ def upload_file():
     
     if not course:
         return jsonify({"error": "No course provided"}), 400
+    
+    if not user_id:
+        return jsonify({"error": "No user_id provided"}), 400
 
     if file.content_type not in FILE_TYPES:
         return jsonify({"error": "Unsupported file type"}), 400

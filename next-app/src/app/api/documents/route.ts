@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { generateRandomString } from '@/lib/utils/random';
+import clientPromise from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,15 +13,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Upload to ChromaDB
-    const response = await fetch('http://127.0.0.1:5000/api/upload', {
-      method: 'POST',
-      body: formData,
-      headers: {
-          'Accept': 'application/json' // Ensure Flask returns JSON
-      }
-    });
-
     // Read the file as ArrayBuffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -28,15 +20,58 @@ export async function POST(request: NextRequest) {
     // Generate a unique filename
     const fileName = `${generateRandomString(8)}_${file.name}`;
     
-    // For now, we'll create a simple data URL to demonstrate storage
-    // In a production environment, you'd upload to a storage service like S3
-    const base64 = buffer.toString('base64');
-    const url = `data:${file.type};base64,${base64}`;
+    // For now, we'll store directly in MongoDB
+    let fileId;
+    try {
+      const client = await clientPromise;
+      const db = client.db();
+      
+      // Store the file in MongoDB files collection
+      const filesCollection = db.collection('files');
+      const fileDoc = {
+        fileName,
+        originalName: file.name,
+        mimeType: file.type,
+        size: buffer.length,
+        content: buffer.toString('base64'),
+        uploadDate: new Date(),
+      };
+      
+      const result = await filesCollection.insertOne(fileDoc);
+      fileId = result.insertedId.toString();
+      
+      console.log('File stored in MongoDB successfully with ID:', fileId);
+    } catch (mongoError) {
+      console.error('Error storing file in MongoDB:', mongoError);
+      return NextResponse.json({ 
+        error: 'Failed to store file in database',
+        details: mongoError instanceof Error ? mongoError.message : String(mongoError)
+      }, { status: 500 });
+    }
+    
+    // Try to upload to ChromaDB if available
+    try {
+      await fetch('http://127.0.0.1:5000/api/upload', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      console.log('File indexed in ChromaDB successfully');
+    } catch (chromaError) {
+      // Log the error but continue - this ensures local uploads still work if ChromaDB is unavailable
+      console.warn('Failed to index in ChromaDB, continuing with file storage:', chromaError);
+    }
+    
+    // Generate a URL for retrieving the file
+    const url = `/api/documents/${fileId}`;
     
     // Return the URL of the stored document
     return NextResponse.json({
       url,
       fileName,
+      fileId,
       message: 'File uploaded successfully'
     }, { status: 200 });
     
