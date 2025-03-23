@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +35,7 @@ const CourseSettingsModal: React.FC<CourseSettingsModalProps> = ({
   const [courseName, setCourseName] = useState('');
   const [instructor, setInstructor] = useState('');
   const [syllabus, setSyllabus] = useState<File | null>(null);
+  const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
   
   // Parse current schedule and initialize form values
   useEffect(() => {
@@ -121,6 +121,12 @@ const CourseSettingsModal: React.FC<CourseSettingsModalProps> = ({
     onClose();
   };
 
+  const handleConfirmRemove = () => {
+    onRemoveCourse();
+    setShowRemoveConfirmation(false);
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] sm:max-h-[90vh]">
@@ -182,7 +188,7 @@ const CourseSettingsModal: React.FC<CourseSettingsModalProps> = ({
                 <h3 className="text-sm font-medium text-destructive mb-2">Danger Zone</h3>
                 <Button 
                   variant="destructive" 
-                  onClick={onRemoveCourse}
+                  onClick={() => setShowRemoveConfirmation(true)}
                   className="w-full justify-center"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -211,6 +217,25 @@ const CourseSettingsModal: React.FC<CourseSettingsModalProps> = ({
           <Button onClick={handleSave}>Save Changes</Button>
         </DialogFooter>
       </DialogContent>
+      
+      {/* Confirmation Dialog */}
+      <Dialog open={showRemoveConfirmation} onOpenChange={setShowRemoveConfirmation}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Removal</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>Are you sure you want to remove "{courseName}"? This action cannot be undone.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRemoveConfirmation(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmRemove}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Remove Course
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };

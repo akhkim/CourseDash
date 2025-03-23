@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send } from 'lucide-react';
+import { fetchAssistantResponse } from '@/api/api';
 
 interface Message {
   id: string;
@@ -43,7 +44,7 @@ const ChatSection: React.FC = () => {
     }
   };
   
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputValue.trim() === '') return;
     
     // Add user message
@@ -57,17 +58,14 @@ const ChatSection: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     
-    // Simulate assistant response
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "I've received your message. In a real implementation, this would connect to an AI assistant to provide relevant responses about your course materials.",
-        sender: 'assistant',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-    }, 1000);
+    const { response } = await fetchAssistantResponse(inputValue);
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: response,
+      sender: 'assistant',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, assistantMessage]);
   };
   
   const formatTime = (date: Date) => {

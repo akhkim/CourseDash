@@ -11,5 +11,6 @@ docs/_build/
 .env
 .DS_Store
 privateinfobutidc.json
+node_modules/
 
 chroma_db
