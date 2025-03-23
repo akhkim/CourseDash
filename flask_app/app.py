@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_app.chatbot import vectorize_and_store, get_response, delete_history
-from flask_app.text_extraction import extract_title
+from flask_app.text_extraction import extract_title, summarise
 import datetime
 
 from flask_app.add_sample_users import insert_sample_users
@@ -47,8 +47,8 @@ def upload_file():
     return jsonify({"message": "File uploaded & processed successfully."})
 
 
-@app.route("/api/lecture-title", methods=["POST"])
-def get_lecture_title():
+@app.route("/api/lecture-info", methods=["POST"])
+def get_lecture_info():
     file = request.files.get('file')
 
     if not file:
@@ -57,8 +57,9 @@ def get_lecture_title():
     if file.content_type not in FILE_TYPES:
         return jsonify({"error": "Unsupported file type"}), 400
 
-    title = extract_title(file)
-    return jsonify({'title': title})
+    title = extract_title(file).rstrip("\n")
+    summary = summarise(file).rstrip("\n")
+    return jsonify({'title': title, 'summary': summary})
 
 
 @app.route("/api/chat", methods=["POST"])
@@ -81,6 +82,7 @@ def delete_chat_history():
     # Deletes the unified in-memory chat history for now.
     # In the future, chat history will be stored in the cloud.
     delete_history()
+    return jsonify({'message': "Deleted chat history successfully"})
 
 
 @app.route('/api/users', methods=['POST'])

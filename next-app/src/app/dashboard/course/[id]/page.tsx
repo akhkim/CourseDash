@@ -150,6 +150,15 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const router = useRouter();
   const { toast } = useToast();
 
+  useEffect(() => {
+    const deleteChatHistory = async () => {
+      await fetch('/api/chat', {
+        method: 'DELETE'
+      });
+    };
+    deleteChatHistory()
+  }, [courseData])
+
   // Fetch course data
   useEffect(() => {
     const fetchCourseData = async () => {
