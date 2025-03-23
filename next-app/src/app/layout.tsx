@@ -1,15 +1,13 @@
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
-import { Toaster } from "@/components/ui/toaster"; // Import the Toaster component
+import { Toaster } from "@/components/ui/toaster";
+import { metadata } from "./metadata"; // Import the metadata
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "NextJS MongoDB App",
-  description: "A NextJS app with MongoDB integration",
-};
+// Export the imported metadata
+export { metadata };
 
 export default function RootLayout({
   children,
