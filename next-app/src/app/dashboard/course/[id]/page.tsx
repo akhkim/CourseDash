@@ -288,9 +288,18 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       // Create a FormData object
       const formData = new FormData();
       formData.append('file', data.file);
+      formData.append('course', courseData ? courseData.courseName : "");
+      formData.append('date', data.date);
+      formData.append('user_id', JSON.parse(localStorage.getItem("auth_user")!).id);
 
       // Now send the FormData
       const result = await fetch('/api/lecture-title', {
+        method: 'POST',
+        body: formData  // This is correct - sending FormData
+      });
+      console.log("Upload result:", result);
+
+      const result2 = await fetch('/api/documents', {
         method: 'POST',
         body: formData  // This is correct - sending FormData
       });
