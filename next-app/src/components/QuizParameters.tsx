@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Book, BrainCircuit } from 'lucide-react';
@@ -16,18 +17,33 @@ export interface QuizParameters {
   difficulty: 'easy' | 'medium' | 'hard';
   fromLecture: number;
   toLecture: number;
+  numberOfQuestions: number;
 }
 
 const QuizParameters: React.FC<QuizParametersProps> = ({ onStartQuiz }) => {
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
-  const [lectureRange, setLectureRange] = useState([1, 5]);
+  const [fromLecture, setFromLecture] = useState(1);
+  const [toLecture, setToLecture] = useState(5);
+  const [numberOfQuestions, setNumberOfQuestions] = useState(10);
   const maxLectures = 10; // You can adjust this based on your course data
+  const maxQuestions = 30; // Maximum number of questions
+  
+  const handleFromLectureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 1;
+    setFromLecture(Math.min(Math.max(value, 1), toLecture));
+  };
+  
+  const handleToLectureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 1;
+    setToLecture(Math.min(Math.max(value, fromLecture), maxLectures));
+  };
   
   const handleStart = () => {
     onStartQuiz({
       difficulty,
-      fromLecture: lectureRange[0],
-      toLecture: lectureRange[1]
+      fromLecture,
+      toLecture,
+      numberOfQuestions
     });
   };
   
@@ -73,26 +89,55 @@ const QuizParameters: React.FC<QuizParametersProps> = ({ onStartQuiz }) => {
           </div>
           
           <div className="space-y-2">
+            <Label>Lecture Coverage</Label>
+            <div className="flex items-center space-x-2">
+              <div className="w-full">
+                <Label htmlFor="fromLecture" className="text-xs text-muted-foreground">From</Label>
+                <Input 
+                  id="fromLecture"
+                  type="number"
+                  min={1}
+                  max={toLecture}
+                  value={fromLecture}
+                  onChange={handleFromLectureChange}
+                />
+              </div>
+              <div className="w-full">
+                <Label htmlFor="toLecture" className="text-xs text-muted-foreground">To</Label>
+                <Input 
+                  id="toLecture"
+                  type="number"
+                  min={fromLecture}
+                  max={maxLectures}
+                  value={toLecture}
+                  onChange={handleToLectureChange}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Lecture Coverage</Label>
+              <Label htmlFor="numberOfQuestions">Number of Questions</Label>
               <span className="text-sm text-muted-foreground">
-                Lectures {lectureRange[0]} to {lectureRange[1]}
+                {numberOfQuestions} questions
               </span>
             </div>
             
             <Slider
-              defaultValue={[1, 5]}
-              max={maxLectures}
-              min={1}
+              id="numberOfQuestions"
+              defaultValue={[10]}
+              max={maxQuestions}
+              min={5}
               step={1}
-              value={lectureRange}
-              onValueChange={setLectureRange}
+              value={[numberOfQuestions]}
+              onValueChange={(value) => setNumberOfQuestions(value[0])}
               className="py-4"
             />
             
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Lecture 1</span>
-              <span>Lecture {maxLectures}</span>
+              <span>5</span>
+              <span>{maxQuestions}</span>
             </div>
           </div>
           
