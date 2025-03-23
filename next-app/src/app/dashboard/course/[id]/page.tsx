@@ -318,16 +318,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     });
   };
 
-  const handleQuizComplete = (score: number, totalQuestions: number) => {
-    const percentage = (score / totalQuestions) * 100;
-    
-    toast({
-      title: "Quiz Completed",
-      description: `You scored ${score} out of ${totalQuestions} (${percentage.toFixed(0)}%)`,
-      duration: 3000,
-    });
-  };
-
   const handleStartQuiz = (parameters: QuizParametersType) => {
     setQuizParameters(parameters);
     setShowingQuiz(true);
@@ -364,6 +354,27 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       // Get title from file name first
       let title = data.file.name.split('.')[0];
       let summary = "File uploaded successfully.";
+
+      // Create a FormData object
+      const formData = new FormData();
+      formData.append('file', data.file);
+      formData.append('course', courseData ? courseData.courseName : "");
+      formData.append('date', data.date);
+      formData.append('user_id', JSON.parse(localStorage.getItem("auth_user")!).id);
+
+      // Now send the FormData
+      const result = await fetch('/api/lecture-title', {
+        method: 'POST',
+        body: formData  // This is correct - sending FormData
+      });
+      console.log("Upload result:", result);
+
+      // Also upload the document to store the file in the database
+      const documentResult = await fetch('/api/documents', {
+        method: 'POST',
+        body: formData  // This is correct - sending FormData
+      });
+      console.log("Document upload result:", documentResult);
       
       // Convert file to base64 for storage
       const fileReader = new FileReader();
