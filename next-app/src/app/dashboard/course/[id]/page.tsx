@@ -97,40 +97,44 @@ interface CourseDetailPageProps {
   };
 }
 
-// Function to parse lecture times to create sessions
-const parseCourseTimes = (times: string[] = []): Array<{type: string; day: string; time: string}> => {
-  // Define the return type explicitly to fix linter errors
-  const result: Array<{type: string; day: string; time: string}> = [];
-  
-  if (!times || !Array.isArray(times)) return result;
-  
+const parseCourseTimes = (times: string[] = []): Array<{ type: string; day: string; time: string }> => {
+  const result: Array<{ type: string; day: string; time: string }> = [];
+
+  if (!Array.isArray(times)) {
+    console.error("Invalid input: times is not an array", times);
+    return result;
+  }
+
   for (const time of times) {
     try {
-      if (!time || typeof time !== 'string') continue;
-      
-      const [typeWithColon, details] = time.split(':');
+      console.log("Processing time:", time); // Debugging log
+
+      if (typeof time !== 'string' || !time.includes(':')) continue;
+
+      // Use regex split to only split on the first colon
+      const [typeWithColon, details] = time.split(/:(.+)/).map(str => str.trim());
       if (!typeWithColon || !details) continue;
-      
-      const type = typeWithColon.trim();
-      const [day, ...timeRangeParts] = details.trim().split(' ');
-      const timeRange = timeRangeParts.join(' ');
-      if (!day || !timeRange) continue;
-      
+
+      const type = typeWithColon.toLowerCase();
+
       result.push({
-        type: type === 'lecture' ? 'Lecture' : 
-              type === 'tutorial' ? 'Tutorial' : 
-              type === 'officehours' ? 'Office Hours' : 
-              type.charAt(0).toUpperCase() + type.slice(1),
-        day,
-        time: timeRange
+        type: type === 'lecture' ? 'Lecture' :
+              type === 'tutorial' ? 'Tutorial' :
+              type === 'officehours' ? 'Office Hours' :
+              type.charAt(0).toUpperCase() + type.slice(1), 
+        day: details.split(' ')[0],  // Extracts "Wed" or "Thu"
+        time: details.substring(details.indexOf(' ') + 1) // Extracts full time "8:00-09:00"
       });
+
     } catch (err) {
       console.error("Error parsing time:", time, err);
     }
   }
-  
+
+  console.log("Final parsed output:", result); // Debugging log
   return result;
-}
+};
+
 
 export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const { id } = params;
@@ -262,68 +266,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     setShowingQuiz(false);
   };
 
-  // Function to handle file downloads
-  const handleDownloadFile = (summary: any) => {
-    try {
-      // Check for valid file URL source in different possible structures
-      let fileUrl = '';
-      let fileName = '';
-      
-      // Option 1: Check if the files array exists with URL
-      if (summary.files && Array.isArray(summary.files) && summary.files.length > 0 && summary.files[0].url) {
-        fileUrl = summary.files[0].url;
-        fileName = summary.files[0].name || summary.fileName || 'download';
-      } 
-      // Option 2: Check if there's a direct file property
-      else if (summary.fileUrl) {
-        fileUrl = summary.fileUrl;
-        fileName = summary.fileName || 'download';
-      }
-      // Option 3: Fall back to syllabus PDF if it's the same document
-      else if (courseData?.syllabusPDF && summary.fileName?.includes('syllabus')) {
-        fileUrl = courseData.syllabusPDF;
-        fileName = summary.fileName || 'syllabus.pdf';
-      }
-      
-      if (!fileUrl) {
-        toast({
-          title: "Download Error",
-          description: "No file available for download",
-          variant: "destructive",
-          duration: 3000,
-        });
-        return;
-      }
-      
-      // For data URLs, create a temporary anchor element
-      if (fileUrl.startsWith('data:')) {
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        // For regular URLs, open in a new tab or trigger download
-        window.open(fileUrl, '_blank');
-      }
-      
-      toast({
-        title: "Download Started",
-        description: `Downloading ${fileName}`,
-        duration: 3000,
-      });
-    } catch (err) {
-      console.error("Error downloading file:", err);
-      toast({
-        title: "Download Failed",
-        description: "There was an error downloading the file",
-        variant: "destructive",
-        duration: 3000,
-      });
-    }
-  };
-
   const lectureForm = useForm({
     defaultValues: {
       date: "",
@@ -350,9 +292,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       // Create a FormData object
       const formData = new FormData();
       formData.append('file', data.file);
-      formData.append('course', courseData ? courseData.courseName : "");
-      formData.append('date', data.date);
-      formData.append('user_id', JSON.parse(localStorage.getItem("auth_user")!).id);
 
       // Now send the FormData
       const result = await fetch('/api/lecture-title', {
@@ -360,96 +299,28 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         body: formData  // This is correct - sending FormData
       });
       console.log("Upload result:", result);
-
-      // Also upload the document to store the file in the database
-      const documentResult = await fetch('/api/documents', {
-        method: 'POST',
-        body: formData  // This is correct - sending FormData
-      });
-      console.log("Document upload result:", documentResult);
       
-      // Add a delay to ensure the API calls have completed
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Get results from both API calls
+      // Create a simplified lecture object for display
       const resultData = await result.json();
-      const documentData = await documentResult.json();
-      console.log("Result data:", resultData);
-      console.log("Document data:", documentData);
-      
       const newLecture = {
         id: Date.now().toString(),
         title: resultData.title || data.file.name.split('.')[0], // Fallback to filename if API title is missing
-        name: resultData.title || data.file.name.split('.')[0], // Also set name field for DB compatibility
         fileName: data.file.name,
-        fileType: data.file.type,
         date: data.date || new Date().toISOString().split('T')[0],
-        summary: resultData.summary || "File uploaded successfully.",
-        // Add file information from the document upload
-        files: documentData.url ? [{ 
-          name: data.file.name, 
-          url: documentData.url 
-        }] : []
+        fileType: data.file.type,
+        summary: "File uploaded successfully."
       };
-      
-      // Add the new lecture to the course data and sort by date (newest first)
+      // Add the new lecture to the course data
       if (courseData && courseData.lectureNotes) {
-        // Add new lecture and sort all lectures by date in descending order
-        const sortedLectureNotes = [newLecture, ...courseData.lectureNotes].sort((a, b) => {
-          // Convert dates to comparable format
-          const dateA = new Date(a.date).getTime();
-          const dateB = new Date(b.date).getTime();
-          // Sort descending (newest first)
-          return dateB - dateA;
-        });
-        
         setCourseData({
           ...courseData,
-          lectureNotes: sortedLectureNotes
+          lectureNotes: [newLecture, ...courseData.lectureNotes]
         });
       } else if (courseData) {
         setCourseData({
           ...courseData,
           lectureNotes: [newLecture]
         });
-      }
-      
-      // Update the course in the database with the new lecture data
-      try {
-        const updatedLectureNotes = courseData?.lectureNotes ? 
-          [newLecture, ...courseData.lectureNotes].sort((a, b) => {
-            // Convert dates to comparable format
-            const dateA = new Date(a.date).getTime();
-            const dateB = new Date(b.date).getTime();
-            // Sort descending (newest first)
-            return dateB - dateA;
-          }) : 
-          [newLecture];
-          
-        const updatedCourseData = courseData ? {
-          ...courseData,
-          lectureNotes: updatedLectureNotes
-        } : null;
-        
-        if (updatedCourseData) {
-          const updateResponse = await authFetch(`/api/courses/${id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedCourseData),
-          });
-          
-          if (!updateResponse.ok) {
-            console.warn('Failed to persist lecture to database, but it was added to the UI');
-          } else {
-            console.log('Course updated in database with new lecture: ', updatedCourseData);
-          }
-        }
-      } catch (dbError) {
-        console.error('Error updating course in database:', dbError);
-        // We don't show an error toast here as the lecture was added to the UI successfully
-        // and we don't want to confuse the user
       }
       
       // Reset the form state
@@ -814,7 +685,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                   <p className="text-sm font-medium">{summary.fileName}</p>
                                   <p className="text-xs text-muted-foreground">{summary.fileType} • {summary.date}</p>
                                 </div>
-                                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => handleDownloadFile(summary)}>Download</Button>
+                                <Button size="sm" variant="outline" className="text-xs h-7">Download</Button>
                               </div>
                               <div className="mt-3">
                                 <h4 className="text-sm font-medium mb-1">Summary</h4>
