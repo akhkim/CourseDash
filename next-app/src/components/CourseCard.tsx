@@ -137,15 +137,18 @@ export function CourseCard({
   console.log("Next lecture for course", course.name, ":", nextLecture);
   
   return (
-    <Card className="overflow-hidden transition-all hover:bg-accent/20" onClick={onClick}>
-      <CardHeader>
+    <Card 
+      className="overflow-hidden transition-all duration-300 hover:bg-accent/20 hover:scale-105 hover:shadow-lg transform cursor-pointer border-t-4 border-t-blue-500" 
+      onClick={onClick}
+    >
+      <CardHeader className="pb-3">
         <CardTitle className="line-clamp-1">{course.name}</CardTitle>
-        <CardDescription className="line-clamp-2">
+        <CardDescription className="line-clamp-2 pt-1">
           {course.description}
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-2">
+      <CardContent className="pb-6">
+        <div className="flex flex-col gap-3">
           {course.profName && (
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 opacity-70" />
@@ -156,7 +159,7 @@ export function CourseCard({
           )}
           
           {nextLecture ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gapborder-t-4 border-t-blue-500-2">
               <Clock className="h-4 w-4 opacity-70" />
               <span className="text-sm text-muted-foreground">
                 Next: {formatLectureTime(nextLecture)}
