@@ -299,23 +299,24 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       });
       console.log("Upload result:", result);
 
-      const result2 = await fetch('/api/documents', {
-        method: 'POST',
-        body: formData  // This is correct - sending FormData
-      });
-      // console.log("Upload result:", result);
+      // Add a delay to ensure the API call has completed
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Create a simplified lecture object for display
       const resultData = await result.json();
       console.log("Result data:", resultData);
+      
       const newLecture = {
         id: Date.now().toString(),
         title: resultData.title || data.file.name.split('.')[0], // Fallback to filename if API title is missing
+        name: resultData.title || data.file.name.split('.')[0], // Also set name field for DB compatibility
         fileName: data.file.name,
-        date: data.date || new Date().toISOString().split('T')[0],
         fileType: data.file.type,
-        summary: "File uploaded successfully."
+        date: data.date || new Date().toISOString().split('T')[0],
+        summary: "File uploaded successfully.",
+        files: [] // Initialize empty files array to match schema
       };
+      
       // Add the new lecture to the course data
       if (courseData && courseData.lectureNotes) {
         setCourseData({

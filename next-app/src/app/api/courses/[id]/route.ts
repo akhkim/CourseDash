@@ -89,9 +89,39 @@ export async function PUT(
     }
     
     // Update the course with the new data
-    // Using Object.assign to ensure all fields from body are added to the course document
-    // This handles both existing and non-existing fields
-    Object.assign(course, body);
+    // Handle lecture notes specifically to ensure all fields are preserved
+    if (body.lectureNotes && Array.isArray(body.lectureNotes)) {
+      // If course doesn't have lectureNotes yet, initialize it
+      if (!course.lectureNotes) {
+        (course as any).lectureNotes = [];
+      }
+      
+      // Ensure each lecture note has all its fields preserved
+      body.lectureNotes.forEach((note: any) => {
+        // Check if this note already exists (by id)
+        const existingNoteIndex = ((course as any).lectureNotes || []).findIndex(
+          (n: any) => n.id === note.id || (n._id && n._id.toString() === note._id)
+        );
+        
+        if (existingNoteIndex >= 0) {
+          // Update existing note with all fields
+          (course as any).lectureNotes[existingNoteIndex] = {
+            ...(course as any).lectureNotes[existingNoteIndex],
+            ...note
+          };
+        } else {
+          // Add new note with all fields intact
+          ((course as any).lectureNotes).push(note);
+        }
+      });
+    }
+    
+    // Update all other fields
+    Object.keys(body).forEach(key => {
+      if (key !== 'lectureNotes') {
+        (course as any)[key] = body[key];
+      }
+    });
     
     await course.save();
     

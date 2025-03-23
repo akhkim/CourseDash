@@ -2,9 +2,15 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 // Lecture note structure
 interface LectureNote {
-  name: string;
+  id?: string;
+  _id?: string;
+  title?: string;
+  name?: string;
+  fileName?: string;
+  fileType?: string;
+  summary?: string;
   date: string;
-  files: { name: string, url: string }[];
+  files?: { name: string, url: string }[];
 }
 
 export interface ICourse extends Document {
@@ -21,7 +27,12 @@ export interface ICourse extends Document {
 
 // Define schema for lecture notes
 const LectureNoteSchema = new Schema({
+  id: String,
+  title: String,
   name: String,
+  fileName: String,
+  fileType: String,
+  summary: String,
   date: String,
   files: [{ name: String, url: String }]
 });
