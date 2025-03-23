@@ -12,38 +12,10 @@ import {
   UnlockIcon, 
   Sparkle,
   CheckCircle,
-  User,
-  Star,
-  BarChart3,
-  Award,
-  GraduationCap,
-  Globe,
-  Clock
+  Globe
 } from 'lucide-react';
 
-export default function Home() {
-  // Sample testimonials data
-  const testimonials = [
-    {
-      name: "Alex Johnson",
-      role: "Computer Science Student",
-      text: "CourseDash revolutionized how I organize my coursework. The AI-generated summaries are incredibly helpful during exam season!",
-      rating: 5
-    },
-    {
-      name: "Sophia Chen",
-      role: "Medical Student",
-      text: "The quiz generator has been a game-changer for my anatomy studies. I can quickly test my knowledge on specific topics.",
-      rating: 5
-    },
-    {
-      name: "Marcus Rodriguez",
-      role: "Engineering Major",
-      text: "I've tried many study apps, but CourseDash is by far the most intuitive. The schedule planning feature keeps me on track.",
-      rating: 4
-    }
-  ];
-  
+export default function Home() {  
   // Sample stats data
   const stats = [
     { value: "2,500+", label: "Lines of Code" },
@@ -88,12 +60,6 @@ export default function Home() {
               className="text-sm font-medium hover:text-primary transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all hover:after:w-full" 
             >
               How It Works
-            </a>
-            <a 
-              href="#testimonials" 
-              className="text-sm font-medium hover:text-primary transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all hover:after:w-full"
-            >
-              Testimonials
             </a>
             <a 
               href="#pricing" 
@@ -503,7 +469,7 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 px-6">
+        <section className="px-6">
           <div className="max-w-5xl mx-auto bg-gradient-to-r from-primary to-blue-600 rounded-2xl p-10 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full -ml-32 -mb-32"></div>
@@ -560,37 +526,9 @@ export default function Home() {
               <ul className="space-y-2">
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Features</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Pricing</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Testimonials</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Guide</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-medium mb-4">Company</h4>
-              <ul className="space-y-2">
                 <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">About</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Blog</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Careers</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Contact</a></li>
               </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-medium mb-4">Legal</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Terms of Service</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Privacy Policy</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-primary">Cookies</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t mt-10 pt-6 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-muted-foreground">© 2025 CourseDash. All rights reserved.</p>
-            <div className="flex space-x-4 mt-4 md:mt-0">
-              <a href="#" className="text-xs text-muted-foreground hover:text-primary">Terms</a>
-              <a href="#" className="text-xs text-muted-foreground hover:text-primary">Privacy</a>
-              <a href="#" className="text-xs text-muted-foreground hover:text-primary">Cookies</a>
             </div>
           </div>
         </div>

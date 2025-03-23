@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [isHoveringCourse, setIsHoveringCourse] = useState(false);
+  const [isHoveringAddButton, setIsHoveringAddButton] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -48,6 +49,25 @@ export default function DashboardPage() {
       });
     }
   }, [searchParams, toast]);
+
+  // Add CSS to hide default cursor globally when custom pointer is active
+  useEffect(() => {
+    // Create a style element
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = `
+      body * {
+        cursor: ${isHoveringCourse || isHoveringAddButton ? 'none !important' : 'auto'};
+      }
+    `;
+    
+    // Append style to head
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      // Clean up
+      document.head.removeChild(styleElement);
+    };
+  }, [isHoveringCourse, isHoveringAddButton]);
 
   const fetchCourses = async () => {
     if (user) {
@@ -134,12 +154,17 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 relative" onMouseMove={handleMouseMove}>
       <Navbar />
-      {isHoveringCourse && <Pointer position={mousePosition} />}
+      {(isHoveringCourse || isHoveringAddButton) && <Pointer position={mousePosition} />}
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">My Courses</h1>
-          <Button onClick={() => setIsAddCourseModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Course
+          <Button 
+            onClick={() => setIsAddCourseModalOpen(true)}
+            onMouseEnter={() => setIsHoveringAddButton(true)}
+            onMouseLeave={() => setIsHoveringAddButton(false)}
+            className="transition-transform duration-300 hover:scale-105 group"
+          >
+            <Plus className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-90" /> Add Course
           </Button>
         </div>
 
@@ -158,8 +183,13 @@ export default function DashboardPage() {
         ) : courses.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <p className="text-gray-600">You don't have any courses yet.</p>
-            <Button onClick={() => setIsAddCourseModalOpen(true)} className="mt-4">
-              <Plus className="mr-2 h-4 w-4" /> Add Your First Course
+            <Button 
+              onClick={() => setIsAddCourseModalOpen(true)} 
+              className="mt-4 transition-transform duration-300 hover:scale-105 group"
+              onMouseEnter={() => setIsHoveringAddButton(true)}
+              onMouseLeave={() => setIsHoveringAddButton(false)}
+            >
+              <Plus className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-90" /> Add Your First Course
             </Button>
           </div>
         ) : (
@@ -167,10 +197,8 @@ export default function DashboardPage() {
             {courses.map((course) => (
               <div
                 key={course._id}
-                className="cursor-pointer"
                 onMouseEnter={() => setIsHoveringCourse(true)}
                 onMouseLeave={() => setIsHoveringCourse(false)}
-                style={{ cursor: isHoveringCourse ? 'none' : 'auto' }}
               >
                 <CourseCard
                   course={{
