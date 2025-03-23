@@ -11,7 +11,16 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
-    
+
+    // Upload to ChromaDB
+    const response = await fetch('http://127.0.0.1:5000/api/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {
+          'Accept': 'application/json' // Ensure Flask returns JSON
+      }
+    });
+
     // Read the file as ArrayBuffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
