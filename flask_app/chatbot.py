@@ -16,7 +16,7 @@ HISTORY = []  # Store conversation history in-memory for the purpose of hackatho
 
 
 def vectorize_and_store(file, course, date, user_id):
-    text = {extract_text(file)}
+    text = extract_text(file)
     if date:
         text = "Date: {date}\n\n" + text
     embedding = get_embedding(text)
