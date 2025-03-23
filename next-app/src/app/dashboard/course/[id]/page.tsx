@@ -58,6 +58,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { authFetch } from '@/lib/utils/auth-fetch';
 import { useAuth } from '@/lib/auth-context';
 import { Progress } from "@/components/ui/progress";
+import React from 'react';
 
 // Interface for course data from API
 interface CourseData {
@@ -206,6 +207,51 @@ const sortSessionsByProximity = (
     // If same day, compare by time
     return (hourA * 60 + minuteA) - (hourB * 60 + minuteB);
   });
+};
+
+// Custom ChevronIcon component that rotates based on open state
+const RotatingChevron: React.FC<{ className?: string }> = ({ className }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    
+    const parent = element.closest('[data-state]');
+    if (!parent) return;
+    
+    // Set initial state
+    setIsOpen(parent.getAttribute('data-state') === 'open');
+    
+    // Create a mutation observer to watch for attribute changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === 'attributes' && 
+          mutation.attributeName === 'data-state'
+        ) {
+          setIsOpen(parent.getAttribute('data-state') === 'open');
+        }
+      });
+    });
+    
+    // Start observing the parent element
+    observer.observe(parent, { attributes: true });
+    
+    // Cleanup function
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  
+  return (
+    <div ref={ref} className="flex items-center justify-center">
+      <ChevronDown 
+        className={`${className} transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+      />
+    </div>
+  );
 };
 
 export default function CourseDetailPage({ params }: CourseDetailPageProps) {
@@ -761,7 +807,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     <div className="space-y-2">
                       {sessions.length > 0 ? (
                         sessions.slice(0, 3).map((session, index) => (
-                          <div key={index} className="p-3 border rounded-lg bg-muted/10">
+                          <div key={index} className="p-3 border rounded-lg bg-muted/10 mb-1 mr-1 mt-1">
                             <p className="font-medium">{session.type}</p>
                             <p className="text-xs text-muted-foreground mt-1">{session.day}, {session.time}</p>
                           </div>
@@ -882,12 +928,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   <div className="space-y-3">
                     {courseData.lectureNotes.map(summary => (
                       <Collapsible key={summary.id} className="border rounded-lg overflow-hidden">
-                        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30 focus:outline-none">
+                        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30 focus:outline-none group">
                           <div>
                             <h3 className="font-medium">{summary.title}</h3>
                             <p className="text-sm text-muted-foreground">{summary.date}</p>
                           </div>
-                          <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform ui-open:rotate-180" />
+                          <RotatingChevron className="h-5 w-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </CollapsibleTrigger>
                         <CollapsibleContent className="border-t px-4 py-3 bg-muted/10">
                           <div className="flex items-start gap-3">
@@ -1007,12 +1053,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   <div className="space-y-3">
                     {courseData.assignments.map(assignment => (
                       <Collapsible key={assignment.id} className="border rounded-lg overflow-hidden">
-                        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30 focus:outline-none">
+                        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30 focus:outline-none group">
                           <div>
                             <h3 className="font-medium">{assignment.title}</h3>
                             <p className="text-sm text-muted-foreground">Due: {assignment.dueDate}</p>
                           </div>
-                          <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform ui-open:rotate-180" />
+                          <RotatingChevron className="h-5 w-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </CollapsibleTrigger>
                         <CollapsibleContent className="border-t px-4 py-3 bg-muted/10">
                           <div>
