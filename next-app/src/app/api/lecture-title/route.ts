@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // URL of the Flask API server - update this with your actual Flask server URL
-const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || 'http://localhost:5000';
+const FLASK_API_URL = 'http://localhost:5000';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
 
       // If successful, return the Flask response
       const data = await flaskResponse.json();
+      console.log("Flask response:", data);
       return NextResponse.json(data);
     } catch (flaskError) {
       console.error('Error calling Flask API:', flaskError);

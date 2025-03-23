@@ -56,7 +56,6 @@ import { useForm } from "react-hook-form";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { authFetch } from '@/lib/utils/auth-fetch';
 import { useAuth } from '@/lib/auth-context';
-import { uploadFileForAnalysis } from '@/lib/utils/file-upload';
 
 // Interface for course data from API
 interface CourseData {
@@ -277,21 +276,27 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         });
         return;
       }
+      // Create a FormData object
+      const formData = new FormData();
+      formData.append('file', data.file);
 
-      // Upload file to our simple Next.js API endpoint
-      const result = await uploadFileForAnalysis(data.file);
+      // Now send the FormData
+      const result = await fetch('/api/lecture-title', {
+        method: 'POST',
+        body: formData  // This is correct - sending FormData
+      });
       console.log("Upload result:", result);
       
       // Create a simplified lecture object for display
+      const resultData = await result.json();
       const newLecture = {
         id: Date.now().toString(),
-        title: data.file.name.split('.')[0],
+        title: resultData.title || data.file.name.split('.')[0], // Fallback to filename if API title is missing
         fileName: data.file.name,
         date: data.date || new Date().toISOString().split('T')[0],
         fileType: data.file.type,
-        summary: "File uploaded successfully. Analysis pending."
+        summary: "File uploaded successfully."
       };
-      
       // Add the new lecture to the course data
       if (courseData && courseData.lectureNotes) {
         setCourseData({
