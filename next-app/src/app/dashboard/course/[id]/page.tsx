@@ -74,6 +74,12 @@ interface CourseData {
     date: string;
     fileType: string;
     summary: string;
+    url?: string;
+    fileContent?: string;
+    files?: Array<{
+      name: string;
+      url: string;
+    }>;
   }>;
   assignments?: Array<{
     id: string;
@@ -208,7 +214,8 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const [quizParameters, setQuizParameters] = useState<QuizParametersType>({
     difficulty: 'easy',
     fromLecture: 1,
-    toLecture: 5
+    toLecture: 5,
+    numberOfQuestions: 5
   });
   const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -353,26 +360,58 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         });
         return;
       }
-      // Create a FormData object
-      const formData = new FormData();
-      formData.append('file', data.file);
 
-      // Now send the FormData
-      const result = await fetch('/api/lecture-title', {
-        method: 'POST',
-        body: formData  // This is correct - sending FormData
-      });
-      console.log("Upload result:", result);
+      // Get title from file name first
+      let title = data.file.name.split('.')[0];
+      let summary = "File uploaded successfully.";
       
-      // Create a simplified lecture object for display
-      const resultData = await result.json();
+      // Convert file to base64 for storage
+      const fileReader = new FileReader();
+      const fileContentPromise = new Promise<string>((resolve) => {
+        fileReader.onload = (e) => {
+          const base64Content = e.target?.result as string;
+          resolve(base64Content);
+        };
+        fileReader.readAsDataURL(data.file);
+      });
+      
+      const fileContent = await fileContentPromise;
+      
+      // Try to get a better title and summary from the lecture-title API
+      try {
+        const titleFormData = new FormData();
+        titleFormData.append('file', data.file);
+        
+        const titleResponse = await fetch('/api/lecture-title', {
+          method: 'POST',
+          body: titleFormData
+        });
+        
+        if (titleResponse.ok) {
+          const titleData = await titleResponse.json();
+          if (titleData.title) {
+            title = titleData.title;
+          }
+          if (titleData.summary) {
+            summary = titleData.summary;
+          }
+        }
+      } catch (titleError) {
+        console.warn("Could not extract better title/summary, using defaults instead", titleError);
+      }
+      
+      // Create a lecture note object with the correct structure expected by the database
       const newLecture = {
         id: Date.now().toString(),
-        title: resultData.title || data.file.name.split('.')[0], // Fallback to filename if API title is missing
+        title: title,
         fileName: data.file.name,
         date: data.date || new Date().toISOString().split('T')[0],
         fileType: data.file.type,
-        summary: "File uploaded successfully."
+        summary: summary,
+        files: [{
+          name: data.file.name,
+          url: fileContent // Store the base64 content as the URL
+        }]
       };
       
       // Create the updated course data
@@ -394,7 +433,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         setCourseData(updatedCourseData);
       }
       
-      // Save the updated course data to the database
+      // Save the updated course data to the database using the existing endpoint
       if (updatedCourseData) {
         try {
           const updateResponse = await authFetch(`/api/courses/${id}`, {
@@ -415,6 +454,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             });
           } else {
             console.log('Successfully updated lecture in database');
+            // Refresh course data to ensure we have the latest structure from the server
+            const refreshResponse = await authFetch(`/api/courses/${id}`);
+            if (refreshResponse.ok) {
+              const refreshData = await refreshResponse.json();
+              setCourseData(refreshData.course);
+            }
           }
         } catch (dbError) {
           console.error('Error updating database:', dbError);
@@ -789,7 +834,18 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                   <p className="text-sm font-medium">{summary.fileName}</p>
                                   <p className="text-xs text-muted-foreground">{summary.fileType} • {summary.date}</p>
                                 </div>
-                                <Button size="sm" variant="outline" className="text-xs h-7">Download</Button>
+                                <a 
+                                  href={summary.files && summary.files.length > 0 
+                                    ? summary.files[0].url 
+                                    : summary.fileContent || summary.url} 
+                                  download={summary.fileName}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <Button size="sm" variant="outline" className="text-xs h-7">
+                                    Download
+                                  </Button>
+                                </a>
                               </div>
                               <div className="mt-3">
                                 <h4 className="text-sm font-medium mb-1">Summary</h4>
