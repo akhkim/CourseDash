@@ -24,7 +24,8 @@ import {
   Settings,
   Plus,
   ChevronDown,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -56,6 +57,8 @@ import { useForm } from "react-hook-form";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { authFetch } from '@/lib/utils/auth-fetch';
 import { useAuth } from '@/lib/auth-context';
+import { Progress } from "@/components/ui/progress";
+import React from 'react';
 
 // Interface for course data from API
 interface CourseData {
@@ -206,6 +209,51 @@ const sortSessionsByProximity = (
   });
 };
 
+// Custom ChevronIcon component that rotates based on open state
+const RotatingChevron: React.FC<{ className?: string }> = ({ className }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    
+    const parent = element.closest('[data-state]');
+    if (!parent) return;
+    
+    // Set initial state
+    setIsOpen(parent.getAttribute('data-state') === 'open');
+    
+    // Create a mutation observer to watch for attribute changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === 'attributes' && 
+          mutation.attributeName === 'data-state'
+        ) {
+          setIsOpen(parent.getAttribute('data-state') === 'open');
+        }
+      });
+    });
+    
+    // Start observing the parent element
+    observer.observe(parent, { attributes: true });
+    
+    // Cleanup function
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  
+  return (
+    <div ref={ref} className="flex items-center justify-center">
+      <ChevronDown 
+        className={`${className} transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+      />
+    </div>
+  );
+};
+
 export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const { id } = params;
   const [activeTab, setActiveTab] = useState("summary");
@@ -220,6 +268,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
   
   const { user } = useAuth();
   const router = useRouter();
@@ -351,6 +402,10 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         return;
       }
 
+      // Start upload process
+      setIsUploading(true);
+      setUploadProgress(10);
+
       // Get title from file name first
       let title = data.file.name.split('.')[0];
       let summary = "File uploaded successfully.";
@@ -362,6 +417,8 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       formData.append('date', data.date);
       formData.append('user_id', JSON.parse(localStorage.getItem("auth_user")!).id);
 
+      setUploadProgress(30);
+      
       // Now send the FormData
       const result = await fetch('/api/lecture-title', {
         method: 'POST',
@@ -369,12 +426,16 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       });
       console.log("Upload result:", result);
 
+      setUploadProgress(50);
+      
       // Also upload the document to store the file in the database
       const documentResult = await fetch('/api/documents', {
         method: 'POST',
         body: formData  // This is correct - sending FormData
       });
       console.log("Document upload result:", documentResult);
+      
+      setUploadProgress(70);
       
       // Convert file to base64 for storage
       const fileReader = new FileReader();
@@ -411,6 +472,8 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         console.warn("Could not extract better title/summary, using defaults instead", titleError);
       }
       
+      setUploadProgress(80);
+      
       // Create a lecture note object with the correct structure expected by the database
       const newLecture = {
         id: Date.now().toString(),
@@ -443,6 +506,8 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       if (updatedCourseData) {
         setCourseData(updatedCourseData);
       }
+      
+      setUploadProgress(90);
       
       // Save the updated course data to the database using the existing endpoint
       if (updatedCourseData) {
@@ -483,6 +548,8 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         }
       }
       
+      setUploadProgress(100);
+      
       // Reset the form state
       lectureForm.reset();
       setSelectedFileName(null);
@@ -493,6 +560,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         description: `${data.file.name} has been added to your lectures.`,
         duration: 3000,
       });
+
+      // Close the dialog
+      setDialogOpen(false);
     } catch (err) {
       console.error("Error uploading lecture:", err);
       toast({
@@ -501,6 +571,10 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         variant: "destructive",
         duration: 3000,
       });
+    } finally {
+      // Reset upload state
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -539,6 +613,16 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     toast({
       title: "Assessment Added",
       description: `${data.title} has been added to your assessments.`,
+      duration: 3000,
+    });
+  };
+
+  const handleQuizComplete = (score: number, totalQuestions: number) => {
+    // This function can be implemented to handle quiz completion
+    setShowingQuiz(false);
+    toast({
+      title: "Quiz Completed",
+      description: `You scored ${score} out of ${totalQuestions}.`,
       duration: 3000,
     });
   };
@@ -723,7 +807,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     <div className="space-y-2">
                       {sessions.length > 0 ? (
                         sessions.slice(0, 3).map((session, index) => (
-                          <div key={index} className="p-3 border rounded-lg bg-muted/10">
+                          <div key={index} className="p-3 border rounded-lg bg-muted/10 mb-1 mr-1 mt-1">
                             <p className="font-medium">{session.type}</p>
                             <p className="text-xs text-muted-foreground mt-1">{session.day}, {session.time}</p>
                           </div>
@@ -747,7 +831,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     Lecture Materials
                   </h2>
                   
-                  <Dialog>
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
                     <Button size="sm" className="flex items-center gap-1.5 mr-4 transition-transform hover:scale-105">
                       <Plus className="h-4 w-4 transition-transform group-hover:rotate-90"/>
@@ -806,15 +890,32 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                             </p>
                           </div>
                           
+                          {isUploading && (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">Uploading...</span>
+                                <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
+                              </div>
+                              <Progress value={uploadProgress} className="h-2" />
+                            </div>
+                          )}
+                          
                           <DialogFooter>
                             <DialogClose asChild>
-                              <Button type="button" variant="outline">Cancel</Button>
+                              <Button type="button" variant="outline" disabled={isUploading}>Cancel</Button>
                             </DialogClose>
                             <Button 
                               type="submit"
-                              disabled={!selectedFileName}
+                              disabled={!selectedFileName || isUploading}
                             >
-                              Upload Lecture
+                              {isUploading ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                'Upload Lecture'
+                              )}
                             </Button>
                           </DialogFooter>
                         </form>
@@ -827,12 +928,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   <div className="space-y-3">
                     {courseData.lectureNotes.map(summary => (
                       <Collapsible key={summary.id} className="border rounded-lg overflow-hidden">
-                        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30 focus:outline-none">
+                        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30 focus:outline-none group">
                           <div>
                             <h3 className="font-medium">{summary.title}</h3>
                             <p className="text-sm text-muted-foreground">{summary.date}</p>
                           </div>
-                          <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform ui-open:rotate-180" />
+                          <RotatingChevron className="h-5 w-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </CollapsibleTrigger>
                         <CollapsibleContent className="border-t px-4 py-3 bg-muted/10">
                           <div className="flex items-start gap-3">
@@ -952,12 +1053,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   <div className="space-y-3">
                     {courseData.assignments.map(assignment => (
                       <Collapsible key={assignment.id} className="border rounded-lg overflow-hidden">
-                        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30 focus:outline-none">
+                        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/30 focus:outline-none group">
                           <div>
                             <h3 className="font-medium">{assignment.title}</h3>
                             <p className="text-sm text-muted-foreground">Due: {assignment.dueDate}</p>
                           </div>
-                          <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform ui-open:rotate-180" />
+                          <RotatingChevron className="h-5 w-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </CollapsibleTrigger>
                         <CollapsibleContent className="border-t px-4 py-3 bg-muted/10">
                           <div>
